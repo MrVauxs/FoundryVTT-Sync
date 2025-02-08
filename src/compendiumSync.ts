@@ -104,6 +104,11 @@ if (import.meta.hot) {
 		}),
 	};
 
+	// HMR
+	import.meta.hot.accept();
+	import.meta.hot.dispose(() => Object.entries(hooks).forEach(([k, v]) => Hooks.off(k, v)));
+
+	// Messages
 	import.meta.hot.on(
 		'foundryvtt-compendium-sync:vtt-update:response',
 		({ data: { json } }) => console.log(`Received and saved ${json.name} (${json._id})`),
@@ -123,8 +128,4 @@ if (import.meta.hot) {
 
 		if (foundryJSON !== incomingJSON) await document.update(data, { modifiedTime: timestamp });
 	});
-
-	// HMR
-	import.meta.hot.accept();
-	import.meta.hot.dispose(() => Object.entries(hooks).forEach(([k, v]) => Hooks.off(k, v)));
 }
