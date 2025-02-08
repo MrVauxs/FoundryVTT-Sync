@@ -1,1 +1,1 @@
-export {};
+export default function compendiumSync(): void;

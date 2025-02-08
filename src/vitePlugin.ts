@@ -2,6 +2,8 @@
 import type { Plugin } from "vite";
 import fs from "node:fs";
 
+let hasInjectedCompendiumSync = false;
+
 export default function vttSync(moduleJSON: { id: string }, dataDirectory = "data"): Plugin {
 	return {
 		name: "foundryvtt-compendium-sync",
@@ -78,5 +80,13 @@ export default function vttSync(moduleJSON: { id: string }, dataDirectory = "dat
 			}
 		},
 		config: () => ({ define: { __VTT_SYNC_MODULE__: moduleJSON } }),
+		transform(this, code) {
+			if (!hasInjectedCompendiumSync) {
+				code += `\n\nimport { compendiumSync } from 'foundryvtt-sync';\ncompendiumSync()\n\n`;
+				hasInjectedCompendiumSync = true;
+				console.log("[foundryvtt-compendium-sync] Injected compendium sync code.");
+			}
+			return code;
+		},
 	} satisfies Plugin;
 };

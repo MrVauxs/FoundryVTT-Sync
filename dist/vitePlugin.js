@@ -1,11 +1,12 @@
-import fs from 'node:fs';
-export default function vttSync(moduleJSON, dataDirectory = 'data') {
+import fs from "node:fs";
+let hasInjectedCompendiumSync = false;
+export default function vttSync(moduleJSON, dataDirectory = "data") {
     return {
         name: "foundryvtt-compendium-sync",
         apply: "serve",
         configureServer(server) {
-            server.ws.on('foundryvtt-compendium-sync:vtt-update', (data, client) => {
-                console.log('Received an update:', data.json.name);
+            server.ws.on("foundryvtt-compendium-sync:vtt-update", (data, client) => {
+                console.log("Received an update:", data.json.name);
                 const { json, dir } = data;
                 // Get a list of existing file paths
                 const existingFiles = fs.readdirSync(`${dataDirectory}/${dir}`);
@@ -16,7 +17,7 @@ export default function vttSync(moduleJSON, dataDirectory = 'data') {
                         const filePath = `${dataDirectory}/${dir}/${file}`;
                         if (fs.lstatSync(filePath).isDirectory())
                             continue;
-                        const fileJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                        const fileJson = JSON.parse(fs.readFileSync(filePath, "utf8"));
                         // Check if the ID of the existing file matches with the incoming data's ID
                         if (fileJson._id === json._id) {
                             // If it does, delete the previous file
@@ -24,17 +25,17 @@ export default function vttSync(moduleJSON, dataDirectory = 'data') {
                         }
                     }
                 }
-                fs.writeFileSync(newFilePath, JSON.stringify(json, null, '\t'));
-                client.send('foundryvtt-compendium-sync:vtt-update:response', { data });
+                fs.writeFileSync(newFilePath, JSON.stringify(json, null, "\t"));
+                client.send("foundryvtt-compendium-sync:vtt-update:response", { data });
             });
-            server.ws.on('foundryvtt-compendium-sync:vtt-delete', ({ id, dir }) => {
+            server.ws.on("foundryvtt-compendium-sync:vtt-delete", ({ id, dir }) => {
                 // Get a list of existing file paths
                 const existingFiles = fs.readdirSync(`${dataDirectory}/${dir}`);
                 for (const file of existingFiles) {
                     const filePath = `${dataDirectory}/${dir}/${file}`;
                     if (fs.lstatSync(filePath).isDirectory())
                         continue;
-                    const fileJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                    const fileJson = JSON.parse(fs.readFileSync(filePath, "utf8"));
                     // Check if the ID of the existing file matches with the incoming data's ID
                     if (fileJson._id === id) {
                         // Create _deleted directory if it doesn't exist yet.
@@ -46,27 +47,35 @@ export default function vttSync(moduleJSON, dataDirectory = 'data') {
                             fs.renameSync(filePath, `${dataDirectory}/${dir}/_deleted/${file}`);
                         }
                         catch {
-                            console.error('Could not move file to _deleted directory. Remove manually!');
+                            console.error("Could not move file to _deleted directory. Remove manually!");
                         }
                     }
                 }
             });
-            server.watcher.add(['./data']);
+            server.watcher.add(["./data"]);
         },
         async handleHotUpdate({ file, server, timestamp, read }) {
             if (file.startsWith(`${dataDirectory}/`)
-                && file.endsWith('json')
-                && !file.includes('/_deleted')) {
+                && file.endsWith("json")
+                && !file.includes("/_deleted")) {
                 const content = await read();
                 const data = JSON.parse(content);
                 server.ws.send({
-                    type: 'custom',
-                    event: 'foundryvtt-compendium-sync:system-update',
+                    type: "custom",
+                    event: "foundryvtt-compendium-sync:system-update",
                     data: { json: JSON.stringify(data), file, timestamp },
                 });
             }
         },
-        config: () => ({ define: { __VTT_SYNC_MODULE__: moduleJSON } })
+        config: () => ({ define: { __VTT_SYNC_MODULE__: moduleJSON } }),
+        transform(code) {
+            if (!hasInjectedCompendiumSync) {
+                code += `\n\nimport { compendiumSync } from 'foundryvtt-sync';\ncompendiumSync()\n\n`;
+                hasInjectedCompendiumSync = true;
+                console.log("[foundryvtt-compendium-sync] Injected compendium sync code.");
+            }
+            return code;
+        },
     };
 }
 ;

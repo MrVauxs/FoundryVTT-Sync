@@ -13,7 +13,8 @@
 	"bugs": {
 		"url": "https://github.com/MrVauxs/FoundryVTT-Sync/issues"
 	},
-	"main": "dist/vitePlugin.js",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "tsc -p .",
 		"lint": "eslint . --cache",

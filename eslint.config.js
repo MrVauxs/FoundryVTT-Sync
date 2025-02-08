@@ -22,6 +22,8 @@ export default antfu(
 			"node/prefer-global/process": "off",
 		},
 
-		ignores: [],
+		ignores: [
+			"dist/"
+		],
 	},
 );

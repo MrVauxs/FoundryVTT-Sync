@@ -6,8 +6,8 @@
 			"dom"
 		],
 		"baseUrl": ".",
-		"module": "ES2022",
-		"moduleResolution": "bundler",
+		"module": "NodeNext",
+		"moduleResolution": "nodenext",
 		"types": [
 			"vite/client",
 			"foundry-pf2e",
