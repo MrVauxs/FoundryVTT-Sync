@@ -23,7 +23,7 @@ export default antfu(
 		},
 
 		ignores: [
-			"dist/"
+			"dist/",
 		],
 	},
 );
