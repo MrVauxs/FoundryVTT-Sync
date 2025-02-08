@@ -83,7 +83,7 @@ export default function vttSync(moduleJSON: { id: string }, options = defaultOpt
 		name: "foundryvtt-compendium-sync",
 		apply: "serve",
 		configureServer(server) {
-			server.watcher.add(["./data"]);
+			server.watcher.add([options.dataDirectory]);
 
 			server.ws.on(
 				"foundryvtt-compendium-sync:vtt-update",
