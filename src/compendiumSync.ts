@@ -1,4 +1,5 @@
-import type Document from 'foundry-pf2e/foundry/common/abstract/document.js';
+import type Document from "foundry-pf2e/foundry/common/abstract/document.d.ts";
+
 const { id: moduleID } = __VTT_SYNC_MODULE__;
 
 interface CreateOptions {

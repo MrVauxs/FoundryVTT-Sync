@@ -1,22 +1,18 @@
 {
 	"compilerOptions": {
+		"outDir": "dist",
 		"target": "ES2022",
+		"module": "ES2022",
+		"lib": [
+			"es2022",
+			"dom"
+		],
 		"baseUrl": ".",
-		"module": "ESNext",
-		"moduleResolution": "Bundler",
-		"paths": {
-			"moduleJSON": [
-				"module.json"
-			]
-		},
 		"types": [
 			"vite/client",
 			"foundry-pf2e",
 			"foundry-pf2e/lib-wrapper"
 		],
-		"allowImportingTsExtensions": true,
-		"allowJs": true,
-		"checkJs": true,
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitOverride": true,
@@ -24,17 +20,18 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		// Best practices
-		"noEmit": true,
 		"sourceMap": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"declaration": true,
+		"moduleResolution": "bundler",
 	},
 	"include": [
-		"src/**/*"
-, "src/compendiumSync.ts"	],
+		"src/"
+	],
 	"exclude": [
 		"node_modules/*"
 	]
