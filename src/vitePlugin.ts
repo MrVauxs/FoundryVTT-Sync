@@ -1,13 +1,14 @@
 /* eslint-disable no-console */
-import type { Plugin } from 'vite';
-import fs from 'node:fs';
+import type { Plugin } from "vite";
+import fs from "node:fs";
 
-export default function vttSync(moduleJSON: { id: string }, dataDirectory = 'data'): Plugin {
+export default function vttSync(moduleJSON: { id: string }, dataDirectory = "data"): Plugin {
 	return {
-		name: 'foundryvtt-compendium-sync',
+		name: "foundryvtt-compendium-sync",
+		apply: "serve",
 		configureServer(server) {
-			server.ws.on('foundryvtt-compendium-sync:vtt-update', (data, client) => {
-				console.log('Received an update:', data.json.name);
+			server.ws.on("foundryvtt-compendium-sync:vtt-update", (data, client) => {
+				console.log("Received an update:", data.json.name);
 				const { json, dir } = data;
 
 				// Get a list of existing file paths
@@ -19,7 +20,7 @@ export default function vttSync(moduleJSON: { id: string }, dataDirectory = 'dat
 					for (const file of existingFiles) {
 						const filePath = `${dataDirectory}/${dir}/${file}`;
 						if (fs.lstatSync(filePath).isDirectory()) continue;
-						const fileJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+						const fileJson = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
 						// Check if the ID of the existing file matches with the incoming data's ID
 						if (fileJson._id === json._id) {
@@ -31,19 +32,19 @@ export default function vttSync(moduleJSON: { id: string }, dataDirectory = 'dat
 
 				fs.writeFileSync(
 					newFilePath,
-					JSON.stringify(json, null, '\t'),
+					JSON.stringify(json, null, "\t"),
 				);
 
-				client.send('foundryvtt-compendium-sync:vtt-update:response', { data });
+				client.send("foundryvtt-compendium-sync:vtt-update:response", { data });
 			});
-			server.ws.on('foundryvtt-compendium-sync:vtt-delete', ({ id, dir }) => {
+			server.ws.on("foundryvtt-compendium-sync:vtt-delete", ({ id, dir }) => {
 				// Get a list of existing file paths
 				const existingFiles = fs.readdirSync(`${dataDirectory}/${dir}`);
 
 				for (const file of existingFiles) {
 					const filePath = `${dataDirectory}/${dir}/${file}`;
 					if (fs.lstatSync(filePath).isDirectory()) continue;
-					const fileJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+					const fileJson = JSON.parse(fs.readFileSync(filePath, "utf8"));
 
 					// Check if the ID of the existing file matches with the incoming data's ID
 					if (fileJson._id === id) {
@@ -55,32 +56,27 @@ export default function vttSync(moduleJSON: { id: string }, dataDirectory = 'dat
 							// Move to _deleted/ for safekeeping.
 							fs.renameSync(filePath, `${dataDirectory}/${dir}/_deleted/${file}`);
 						} catch {
-							console.error('Could not move file to _deleted directory. Remove manually!');
+							console.error("Could not move file to _deleted directory. Remove manually!");
 						}
 					}
 				}
 			});
-			server.watcher.add(['./data']);
+			server.watcher.add(["./data"]);
 		},
 		async handleHotUpdate({ file, server, timestamp, read }) {
 			if (file.startsWith(`${dataDirectory}/`)
-				&& file.endsWith('json')
-				&& !file.includes('/_deleted')
+				&& file.endsWith("json")
+				&& !file.includes("/_deleted")
 			) {
 				const content = await read();
 				const data = JSON.parse(content);
 				server.ws.send({
-					type: 'custom',
-					event: 'foundryvtt-compendium-sync:system-update',
+					type: "custom",
+					event: "foundryvtt-compendium-sync:system-update",
 					data: { json: JSON.stringify(data), file, timestamp },
 				});
 			}
 		},
-		apply: 'serve',
-		config: async () => ({
-			define: {
-				__VTT_SYNC_MODULE__: moduleJSON
-			}
-		})
-	}
+		config: () => ({ define: { __VTT_SYNC_MODULE__: moduleJSON } }),
+	} satisfies Plugin;
 };

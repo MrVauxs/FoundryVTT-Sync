@@ -1,1 +1,1 @@
-declare const __VTT_SYNC_MODULE__: { id: string }
+declare const __VTT_SYNC_MODULE__: { id: string };

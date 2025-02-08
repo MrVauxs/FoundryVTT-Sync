@@ -1,13 +1,13 @@
 {
 	"compilerOptions": {
-		"outDir": "dist",
 		"target": "ES2022",
-		"module": "ES2022",
 		"lib": [
 			"es2022",
 			"dom"
 		],
 		"baseUrl": ".",
+		"module": "ES2022",
+		"moduleResolution": "bundler",
 		"types": [
 			"vite/client",
 			"foundry-pf2e",
@@ -19,15 +19,15 @@
 		"noImplicitReturns": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
+		"declaration": true,
+		"outDir": "dist",
 		// Best practices
 		"sourceMap": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,
-		"skipLibCheck": true,
-		"declaration": true,
-		"moduleResolution": "bundler",
+		"skipLibCheck": true
 	},
 	"include": [
 		"src/"

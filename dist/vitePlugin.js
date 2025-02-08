@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 export default function vttSync(moduleJSON, dataDirectory = 'data') {
     return {
-        name: 'foundryvtt-compendium-sync',
+        name: "foundryvtt-compendium-sync",
+        apply: "serve",
         configureServer(server) {
             server.ws.on('foundryvtt-compendium-sync:vtt-update', (data, client) => {
                 console.log('Received an update:', data.json.name);
@@ -65,12 +66,7 @@ export default function vttSync(moduleJSON, dataDirectory = 'data') {
                 });
             }
         },
-        apply: 'serve',
-        config: async () => ({
-            define: {
-                __VTT_SYNC_MODULE__: moduleJSON
-            }
-        })
+        config: () => ({ define: { __VTT_SYNC_MODULE__: moduleJSON } })
     };
 }
 ;

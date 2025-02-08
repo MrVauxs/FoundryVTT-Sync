@@ -1,29 +1,31 @@
 {
-  "name": "foundryvtt-sync",
-  "version": "1.0.0",
-  "description": "A Vite plugin to sync FoundryVTT compendiums with your file system.",
-  "homepage": "https://github.com/MrVauxs/FoundryVTT-Sync#readme",
-  "bugs": {
-    "url": "https://github.com/MrVauxs/FoundryVTT-Sync/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/MrVauxs/FoundryVTT-Sync.git"
-  },
-  "license": "MIT",
-  "author": "Vauxs",
-  "type": "module",
-  "main": "dist/vitePlugin.js",
-  "scripts": {
-    "build": "tsc -p ."
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "^4.1.1",
-    "eslint": "^9.20.0",
-    "eslint-plugin-antfu": "^3.0.0",
-    "eslint-plugin-format": "^1.0.1",
-    "foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
-    "typescript": "^5.7.3",
-    "vite": "^6.1.0"
-  }
+	"name": "foundryvtt-sync",
+	"type": "module",
+	"version": "1.0.0",
+	"description": "A Vite plugin to sync FoundryVTT compendiums with your file system.",
+	"author": "Vauxs",
+	"license": "MIT",
+	"homepage": "https://github.com/MrVauxs/FoundryVTT-Sync#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/MrVauxs/FoundryVTT-Sync.git"
+	},
+	"bugs": {
+		"url": "https://github.com/MrVauxs/FoundryVTT-Sync/issues"
+	},
+	"main": "dist/vitePlugin.js",
+	"scripts": {
+		"build": "tsc -p .",
+		"lint": "eslint . --cache",
+		"lint:fix": "eslint . --fix --cache"
+	},
+	"devDependencies": {
+		"@antfu/eslint-config": "^4.1.1",
+		"eslint": "^9.20.0",
+		"eslint-plugin-antfu": "^3.0.0",
+		"eslint-plugin-format": "^1.0.1",
+		"foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
+		"typescript": "^5.7.3",
+		"vite": "^5.4.14"
+	}
 }
