@@ -1,5 +1,5 @@
 import type Document from 'foundry-pf2e/foundry/common/abstract/document.js';
-import moduleJSON from 'moduleJSON' with { type: 'json' };
+const { id: moduleID } = __VTT_SYNC_MODULE__;
 
 interface CreateOptions {
 	data: (Record<string, any>)[];
@@ -29,7 +29,7 @@ if (import.meta.hot) {
 				ui.notifications.error('Compendium Sync requires the \'libWrapper\' module in order to sync Compendium Folders.');
 			} else {
 				libWrapper.register(
-					moduleJSON.id,
+					moduleID,
 					'CompendiumFolderCollection.prototype._onModifyContents',
 					function (_action, documents, _result, operation, user) {
 						Hooks.callAll('updateCompendium', this, documents, operation, user.id);
@@ -38,7 +38,7 @@ if (import.meta.hot) {
 				);
 			}
 
-			const compendia = game.packs.filter(c => c.metadata.packageName === moduleJSON.id) as (CompendiumCollection & { folders: Folder[] })[];
+			const compendia = game.packs.filter(c => c.metadata.packageName === moduleID) as (CompendiumCollection & { folders: Folder[] })[];
 			console.log(`Found ${compendia.length} compendiums:`);
 			compendia.forEach(async (compendium) => {
 				const documents = await compendium.getDocuments();
@@ -56,7 +56,7 @@ if (import.meta.hot) {
 			// @ts-expect-error No Types Yet
 			if ((_collection instanceof CompendiumFolderCollection)) _collection.metadata = _collection.pack.metadata;
 
-			if (_collection?.metadata?.packageName !== moduleJSON.id) return;
+			if (_collection?.metadata?.packageName !== moduleID) return;
 
 			const dir = _collection.metadata.name;
 
@@ -113,7 +113,7 @@ if (import.meta.hot) {
 		let document: Document | null | undefined;
 
 		if (data._stats.compendiumSource) document = await fromUuid(data._stats.compendiumSource);
-		if (!document) document = await fromUuid(`Compendium.${moduleJSON.id}.${file.split('/')[1]}.${data._id}`);
+		if (!document) document = await fromUuid(`Compendium.${moduleID}.${file.split('/')[1]}.${data._id}`);
 
 		if (!document) throw new Error('Could not find document to update!');
 

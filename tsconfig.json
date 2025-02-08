@@ -34,7 +34,7 @@
 	},
 	"include": [
 		"src/**/*"
-	],
+, "src/compendiumSync.ts"	],
 	"exclude": [
 		"node_modules/*"
 	]

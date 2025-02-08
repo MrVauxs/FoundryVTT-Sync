@@ -13,9 +13,9 @@
   "license": "MIT",
   "author": "Vauxs",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/vitePlugin.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -p ."
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.1.1",

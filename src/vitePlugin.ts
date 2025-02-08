@@ -2,7 +2,7 @@
 import type { Plugin } from 'vite';
 import fs from 'node:fs';
 
-export default function vttSync(dataDirectory = 'data'): Plugin {
+export default function vttSync(moduleJSON: { id: string }, dataDirectory = 'data'): Plugin {
 	return {
 		name: 'foundryvtt-compendium-sync',
 		configureServer(server) {
@@ -76,5 +76,11 @@ export default function vttSync(dataDirectory = 'data'): Plugin {
 				});
 			}
 		},
-	};
+		apply: 'serve',
+		config: async () => ({
+			define: {
+				__VTT_SYNC_MODULE__: moduleJSON
+			}
+		})
+	}
 };
