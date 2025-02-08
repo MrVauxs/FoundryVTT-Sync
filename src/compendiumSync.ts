@@ -20,13 +20,41 @@ interface DeleteOptions {
 	pack: string;
 }
 
+function documentExportToCLI(rootDoc: Document) {
+	const json = rootDoc.toJSON();
+
+	json._key = `!${rootDoc.collectionName}!${rootDoc.id}`;
+	recursiveKeys(rootDoc);
+
+	// document: { items: [ { effects: [] } ] }
+	function recursiveKeys(document: Document, collectionKeys: string[] = [rootDoc.collectionName]) {
+		Object.keys(document.collections).forEach((key) => {
+			const value = document.collections[key].contents.map((embed) => {
+				const json = embed.toJSON();
+
+				collectionKeys.push(embed.collectionName);
+				json._key = `!${collectionKeys.join(".")}!${embed.id}`;
+
+				if (embed.collections) recursiveKeys(embed, collectionKeys);
+
+				return json as ReturnType<Document["toJSON"]>;
+			});
+
+			json[key] = value;
+		});
+	}
+
+	return json;
+}
+
 export default function compendiumSync() {
 	if (import.meta.hot) {
 		const { id: moduleID } = __VTT_SYNC_MODULE__;
 
 		const hooks = {
 			ready: Hooks.on("ready", () => {
-			// https://github.com/foundryvtt/foundryvtt/issues/12134
+				// #region Libwrapper
+				// https://github.com/foundryvtt/foundryvtt/issues/12134
 				if (!game.modules.get("lib-wrapper")?.active && game.user.isGM) {
 					ui.notifications.error("Compendium Sync requires the 'libWrapper' module in order to sync Compendium Folders.");
 				} else {
@@ -39,6 +67,7 @@ export default function compendiumSync() {
 						"LISTENER",
 					);
 				}
+				// #endregion
 
 				ui.notifications.info("Compendium Sync is now active.");
 
@@ -47,10 +76,12 @@ export default function compendiumSync() {
 				compendia.forEach(async (compendium) => {
 					const documents = await compendium.getDocuments();
 					[...documents, ...compendium.folders].forEach((doc) => {
-						const json = doc.toJSON();
 						import.meta.hot?.send(
 							"foundryvtt-compendium-sync:vtt-update",
-							{ json, dir: compendium.metadata.name },
+							{
+								json: documentExportToCLI(doc),
+								dir: compendium.metadata.name,
+							},
 						);
 					});
 				});
@@ -71,10 +102,12 @@ export default function compendiumSync() {
 
 						if (!document) throw new Error("Document not found!?");
 
-						const json = document.toJSON();
 						import.meta.hot?.send(
 							"foundryvtt-compendium-sync:vtt-update",
-							{ json, dir },
+							{
+								json: documentExportToCLI(document),
+								dir,
+							},
 						);
 					});
 				}
@@ -86,10 +119,12 @@ export default function compendiumSync() {
 
 						if (!document) throw new Error("Document not found!?");
 
-						const json = document.toJSON();
 						import.meta.hot?.send(
 							"foundryvtt-compendium-sync:vtt-update",
-							{ json, dir },
+							{
+								json: documentExportToCLI(document),
+								dir,
+							},
 						);
 					});
 				}
@@ -127,7 +162,7 @@ export default function compendiumSync() {
 			if (!document) throw new Error("Could not find document to update!");
 
 			const foundryJSON = JSON.stringify(document.toJSON()).replaceAll(/"modifiedTime":\d+/g, "");
-			const incomingJSON = json.replaceAll(/"modifiedTime":\d+/g, "");
+			const incomingJSON = json.replaceAll(/"modifiedTime":\d+/g, "").replaceAll(/(,?)"_key":(\s?)".+?"/g, "");
 
 			if (foundryJSON !== incomingJSON) await document.update(data, { modifiedTime: timestamp });
 		});

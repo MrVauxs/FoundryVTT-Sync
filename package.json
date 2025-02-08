@@ -26,6 +26,7 @@
 		"eslint-plugin-antfu": "^3.0.0",
 		"eslint-plugin-format": "^1.0.1",
 		"foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
+		"remeda": "^2.20.1",
 		"typescript": "^5.7.3",
 		"vite": "^5.4.14"
 	}

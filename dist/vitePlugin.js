@@ -70,7 +70,7 @@ export default function vttSync(moduleJSON, options = defaultOptions) {
             if (file.startsWith(`${options.dataDirectory}/`)
                 && file.endsWith("json")
                 && !file.includes("/_deleted")) {
-                const content = await read();
+                const content = (await read());
                 const data = JSON.parse(content);
                 server.ws.send({
                     type: "custom",

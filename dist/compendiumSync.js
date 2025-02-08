@@ -1,8 +1,29 @@
+function documentExportToCLI(rootDoc) {
+    const json = rootDoc.toJSON();
+    json._key = `!${rootDoc.collectionName}!${rootDoc.id}`;
+    recursiveKeys(rootDoc);
+    // document: { items: [ { effects: [] } ] }
+    function recursiveKeys(document, collectionKeys = [rootDoc.collectionName]) {
+        Object.keys(document.collections).forEach((key) => {
+            const value = document.collections[key].contents.map((embed) => {
+                const json = embed.toJSON();
+                collectionKeys.push(embed.collectionName);
+                json._key = `!${collectionKeys.join(".")}!${embed.id}`;
+                if (embed.collections)
+                    recursiveKeys(embed, collectionKeys);
+                return json;
+            });
+            json[key] = value;
+        });
+    }
+    return json;
+}
 export default function compendiumSync() {
     if (import.meta.hot) {
         const { id: moduleID } = __VTT_SYNC_MODULE__;
         const hooks = {
             ready: Hooks.on("ready", () => {
+                // #region Libwrapper
                 // https://github.com/foundryvtt/foundryvtt/issues/12134
                 if (!game.modules.get("lib-wrapper")?.active && game.user.isGM) {
                     ui.notifications.error("Compendium Sync requires the 'libWrapper' module in order to sync Compendium Folders.");
@@ -12,14 +33,17 @@ export default function compendiumSync() {
                         Hooks.callAll("updateCompendium", this, documents, operation, user.id);
                     }, "LISTENER");
                 }
+                // #endregion
                 ui.notifications.info("Compendium Sync is now active.");
                 const compendia = game.packs.filter(c => c.metadata.packageName === moduleID);
                 console.log(`Found ${compendia.length} compendiums:`);
                 compendia.forEach(async (compendium) => {
                     const documents = await compendium.getDocuments();
                     [...documents, ...compendium.folders].forEach((doc) => {
-                        const json = doc.toJSON();
-                        import.meta.hot?.send("foundryvtt-compendium-sync:vtt-update", { json, dir: compendium.metadata.name });
+                        import.meta.hot?.send("foundryvtt-compendium-sync:vtt-update", {
+                            json: documentExportToCLI(doc),
+                            dir: compendium.metadata.name,
+                        });
                     });
                 });
             }),
@@ -37,8 +61,10 @@ export default function compendiumSync() {
                         console.log("A Document has been created.", document);
                         if (!document)
                             throw new Error("Document not found!?");
-                        const json = document.toJSON();
-                        import.meta.hot?.send("foundryvtt-compendium-sync:vtt-update", { json, dir });
+                        import.meta.hot?.send("foundryvtt-compendium-sync:vtt-update", {
+                            json: documentExportToCLI(document),
+                            dir,
+                        });
                     });
                 }
                 if ("updates" in _options) {
@@ -47,8 +73,10 @@ export default function compendiumSync() {
                         console.log("A Document has been updated.", document);
                         if (!document)
                             throw new Error("Document not found!?");
-                        const json = document.toJSON();
-                        import.meta.hot?.send("foundryvtt-compendium-sync:vtt-update", { json, dir });
+                        import.meta.hot?.send("foundryvtt-compendium-sync:vtt-update", {
+                            json: documentExportToCLI(document),
+                            dir,
+                        });
                     });
                 }
                 if ("deleteAll" in _options) {
@@ -74,7 +102,7 @@ export default function compendiumSync() {
             if (!document)
                 throw new Error("Could not find document to update!");
             const foundryJSON = JSON.stringify(document.toJSON()).replaceAll(/"modifiedTime":\d+/g, "");
-            const incomingJSON = json.replaceAll(/"modifiedTime":\d+/g, "");
+            const incomingJSON = json.replaceAll(/"modifiedTime":\d+/g, "").replaceAll(/(,?)"_key":(\s?)".+?"/g, "");
             if (foundryJSON !== incomingJSON)
                 await document.update(data, { modifiedTime: timestamp });
         });
