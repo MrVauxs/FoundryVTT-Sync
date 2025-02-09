@@ -35,10 +35,10 @@ function documentExportToCLI(rootDoc: Document) {
 		Object.keys(document.collections).forEach((key) => {
 			const value = document.collections[key].contents.map((embed) => {
 				const json = embed.toJSON();
+				const localColList = [...collectionList, embed.collectionName];
+				const localIDList = [...idList, embed.id];
 
-				collectionList.push(embed.collectionName);
-				idList.push(embed.id);
-				json._key = `!${collectionList.join(".")}!${idList.join(".")}`;
+				json._key = `!${localColList.join(".")}!${localIDList.join(".")}`;
 
 				if (embed.collections) recursiveKeys(embed, collectionList);
 
