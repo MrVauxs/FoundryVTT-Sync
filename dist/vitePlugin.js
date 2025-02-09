@@ -62,7 +62,7 @@ export default function vttSync(moduleJSON, options = defaultOptions) {
         name: "foundryvtt-compendium-sync",
         apply: "serve",
         configureServer(server) {
-            server.watcher.add(["./data"]);
+            server.watcher.add([options.dataDirectory]);
             server.ws.on("foundryvtt-compendium-sync:vtt-update", (data, client) => onUpdate(data, client, options));
             server.ws.on("foundryvtt-compendium-sync:vtt-delete", ({ id, dir }) => onDelete(id, dir, options));
         },
@@ -70,7 +70,7 @@ export default function vttSync(moduleJSON, options = defaultOptions) {
             if (file.startsWith(`${options.dataDirectory}/`)
                 && file.endsWith("json")
                 && !file.includes("/_deleted")) {
-                const content = (await read());
+                const content = await read();
                 const data = JSON.parse(content);
                 server.ws.send({
                     type: "custom",

@@ -3,14 +3,15 @@ function documentExportToCLI(rootDoc) {
     json._key = `!${rootDoc.collectionName}!${rootDoc.id}`;
     recursiveKeys(rootDoc);
     // document: { items: [ { effects: [] } ] }
-    function recursiveKeys(document, collectionKeys = [rootDoc.collectionName]) {
+    function recursiveKeys(document, collectionList = [rootDoc.collectionName], idList = [rootDoc.id]) {
         Object.keys(document.collections).forEach((key) => {
             const value = document.collections[key].contents.map((embed) => {
                 const json = embed.toJSON();
-                collectionKeys.push(embed.collectionName);
-                json._key = `!${collectionKeys.join(".")}!${embed.id}`;
+                collectionList.push(embed.collectionName);
+                idList.push(embed.id);
+                json._key = `!${collectionList.join(".")}!${idList.join(".")}`;
                 if (embed.collections)
-                    recursiveKeys(embed, collectionKeys);
+                    recursiveKeys(embed, collectionList);
                 return json;
             });
             json[key] = value;
