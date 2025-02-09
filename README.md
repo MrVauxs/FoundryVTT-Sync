@@ -6,7 +6,7 @@ A Vite plugin to sync FoundryVTT compendiums with your file system.
 
 1. Add `vttSync(moduleJSON)` plugin to your Vite plugins.
 2. That's it!
-3. If you are getting type errors, just make it "vttSync(...) as Plugin[]" =\_=
+3. If you are getting type errors, just make it "vttSync(...) as Plugin[]" =\_= (or submit a PR fixing this type error!)
 
 ## Ok but what does it do?
 
@@ -19,3 +19,23 @@ The second is that during `vite build`, it will build the JSON files using `foun
 ## Why?
 
 So you don't have to manually disable the module in order to update your local files, if not outright forgetting to run your extract-packs script.
+
+## Types
+
+`vttSync` requires the module JSON file, easily importable in node with
+```js
+import moduleJSON from './module.json' with { type: 'json' };
+```
+You may also use an object with id string at the time of writing this (`{ id: string }`), but this may be expanded upon so this is not a recommended solution.
+
+`vttSync` also has an optional secondary parameter, in which you define filepaths and a transformer.
+```ts
+interface DefaultOptions {
+    // Your JSON directory
+    dataDirectory: string;
+    // Your Foundry DB directory
+    outputDirectory: string;
+    // Runs on the server. Returning a false value invalidates the entry, causing no changes to be made.
+    transformer?: (doc: object) => Promise<Document["_source"]> | Document["_source"] | Promise<false> | false;
+}
+```
