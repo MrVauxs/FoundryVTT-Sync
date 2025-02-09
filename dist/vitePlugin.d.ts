@@ -3,7 +3,7 @@ import type { Plugin } from "vite";
 interface DefaultOptions {
     dataDirectory: string;
     outputDirectory: string;
-    transformer?: (doc: object) => Promise<Document["_source"]> | Document["_source"];
+    transformer?: (doc: Document["_source"]) => Promise<Document["_source"]> | Document["_source"] | Promise<false> | false;
 }
 export default function vttSync(moduleJSON: {
     id: string;
