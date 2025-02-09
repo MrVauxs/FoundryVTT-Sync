@@ -31,9 +31,9 @@ You may also use an object with id string at the time of writing this (`{ id: st
 `vttSync` also has an optional secondary parameter, in which you define filepaths and a transformer.
 ```ts
 interface DefaultOptions {
-    // Your JSON directory
+    // Your root JSON directory (data/)
     dataDirectory: string;
-    // Your Foundry DB directory
+    // Your root Foundry DB directory (packs/)
     outputDirectory: string;
     // Runs on the server. Returning a false value invalidates the entry, causing no changes to be made.
     transformer?: (doc: object) => Promise<Document["_source"]> | Document["_source"] | Promise<false> | false;
