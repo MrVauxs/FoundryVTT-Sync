@@ -20,13 +20,16 @@
 		"lint": "eslint . --cache",
 		"lint:fix": "eslint . --fix --cache"
 	},
+	"dependencies": {
+		"@foundryvtt/foundryvtt-cli": "^1.0.4",
+		"chalk": "^5.4.1"
+	},
 	"devDependencies": {
 		"@antfu/eslint-config": "^4.1.1",
 		"eslint": "^9.20.0",
 		"eslint-plugin-antfu": "^3.0.0",
 		"eslint-plugin-format": "^1.0.1",
 		"foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
-		"remeda": "^2.20.1",
 		"typescript": "^5.7.3",
 		"vite": "^5.4.14"
 	}

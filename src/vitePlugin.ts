@@ -1,17 +1,21 @@
-/* eslint-disable no-console */
 import type { Document } from "foundry-pf2e/foundry/common/abstract/module.js";
 import type { Plugin } from "vite";
 import fs from "node:fs";
+import path from "node:path";
+import { compilePack } from "@foundryvtt/foundryvtt-cli";
+import { log } from "./logs.js";
 
 let hasInjectedCompendiumSync = false;
 
 interface DefaultOptions {
 	dataDirectory: string;
+	outputDirectory: string;
 	transformer?: (doc: object) => Promise<Document["_source"]> | Document["_source"];
 }
 
 const defaultOptions: DefaultOptions = {
 	dataDirectory: "data",
+	outputDirectory: "packs",
 };
 
 function getSafeFilename(filename: string) {
@@ -20,7 +24,7 @@ function getSafeFilename(filename: string) {
 }
 
 async function onUpdate(data: { json: Document["_source"]; dir: string }, client: any, options: typeof defaultOptions) {
-	console.log("Received an update:", data.json.name);
+	log(`Received an update: ${data.json.name}`);
 	const name = data.json.name;
 
 	if (options.transformer) data.json = await options.transformer(data.json);
@@ -83,45 +87,87 @@ function onDelete(id: string, dir: string, options: typeof defaultOptions) {
 	}
 }
 
-export default function vttSync(moduleJSON: { id: string }, options = defaultOptions): Plugin {
-	return {
-		name: "foundryvtt-compendium-sync",
-		apply: "serve",
-		configureServer(server) {
-			server.watcher.add([options.dataDirectory]);
+export default function vttSync(moduleJSON: { id: string }, options = defaultOptions): Plugin[] {
+	return [
+		{
+			name: "foundryvtt-sync:serve",
+			apply: "serve",
+			configureServer(server) {
+				server.watcher.add([options.dataDirectory]);
 
-			server.ws.on(
-				"foundryvtt-compendium-sync:vtt-update",
-				(data, client) => onUpdate(data, client, options),
-			);
+				server.ws.on(
+					"foundryvtt-compendium-sync:vtt-update",
+					(data, client) => onUpdate(data, client, options),
+				);
 
-			server.ws.on(
-				"foundryvtt-compendium-sync:vtt-delete",
-				({ id, dir }) => onDelete(id, dir, options),
-			);
+				server.ws.on(
+					"foundryvtt-compendium-sync:vtt-delete",
+					({ id, dir }) => onDelete(id, dir, options),
+				);
+			},
+			async handleHotUpdate({ file, server, timestamp, read }) {
+				if (file.startsWith(`${options.dataDirectory}/`)
+					&& file.endsWith("json")
+					&& !file.includes("/_deleted")
+				) {
+					const content = await read();
+					const data = JSON.parse(content);
+					server.ws.send({
+						type: "custom",
+						event: "foundryvtt-compendium-sync:system-update",
+						data: { json: JSON.stringify(data), file, timestamp },
+					});
+				}
+			},
+			config: () => ({ define: { __VTT_SYNC_MODULE__: moduleJSON } }),
+			transform(this, code) {
+				if (!hasInjectedCompendiumSync) {
+					code += `\n\nimport compendiumSync from 'foundryvtt-sync/dist/compendiumSync';\ncompendiumSync()\n\n`;
+					hasInjectedCompendiumSync = true;
+					log("Injected compendium sync code.");
+				}
+				return code;
+			},
 		},
-		async handleHotUpdate({ file, server, timestamp, read }) {
-			if (file.startsWith(`${options.dataDirectory}/`)
-				&& file.endsWith("json")
-				&& !file.includes("/_deleted")
-			) {
-				const content = await read();
-				const data = JSON.parse(content);
-				server.ws.send({
-					type: "custom",
-					event: "foundryvtt-compendium-sync:system-update",
-					data: { json: JSON.stringify(data), file, timestamp },
-				});
-			}
+		{
+			name: "foundryvtt-sync:build",
+			apply: "build",
+			enforce: "post",
+			configResolved() {
+				const outDir = path.resolve(process.cwd(), defaultOptions.outputDirectory);
+				log(`Cleaning ${outDir}...`);
+				if (fs.existsSync(outDir)) {
+					const filesToClean = (fs.readdirSync(outDir)).map(dirName => path.resolve(outDir, dirName));
+					for (const file of filesToClean) {
+						fs.rmSync(file, { recursive: true });
+					}
+				} else {
+					fs.mkdirSync(outDir);
+				}
+
+				async function compileMultiple(packFolders: fs.Dirent[], previous: string) {
+					for (const pack of packFolders) {
+						if (pack.isDirectory()) {
+							const filepath = path.resolve(previous, pack.name);
+							const files = fs.readdirSync(filepath, { withFileTypes: true });
+
+							if (files.some(x => x.isDirectory())) {
+								await compileMultiple(files, `${previous}/${pack.name}`);
+							} else {
+								const output = path.resolve(outDir, `${pack.name}`);
+								if (!fs.existsSync(output)) {
+									fs.mkdirSync(output, { recursive: true });
+								}
+								await compilePack(filepath, output);
+							}
+						}
+					}
+				}
+
+				log(`Compiling to ${outDir}...`);
+				const packFolders = fs.readdirSync(defaultOptions.dataDirectory, { withFileTypes: true });
+				compileMultiple(packFolders, defaultOptions.dataDirectory);
+			},
 		},
-		config: () => ({ define: { __VTT_SYNC_MODULE__: moduleJSON } }),
-		transform(this, code) {
-			if (!hasInjectedCompendiumSync) {
-				code += `\n\nimport { compendiumSync } from 'foundryvtt-sync';\ncompendiumSync()\n\n`;
-				hasInjectedCompendiumSync = true;
-				console.log("[foundryvtt-compendium-sync] Injected compendium sync code.");
-			}
-			return code;
-		},
-	} satisfies Plugin;
+	] satisfies Plugin[];
 };
