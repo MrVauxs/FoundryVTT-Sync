@@ -10,7 +10,7 @@ let hasInjectedCompendiumSync = false;
 interface DefaultOptions {
 	dataDirectory: string;
 	outputDirectory: string;
-	transformer?: (doc: object) => Promise<Document["_source"]> | Document["_source"];
+	transformer?: (doc: Document["_source"]) => Promise<Document["_source"]> | Document["_source"] | Promise<false> | false;
 }
 
 const defaultOptions: DefaultOptions = {
@@ -27,10 +27,14 @@ async function onUpdate(data: { json: Document["_source"]; dir: string }, client
 	log(`Received an update: ${data.json.name}`);
 	const name = data.json.name;
 
-	if (options.transformer) data.json = await options.transformer(data.json);
-	if (!data.json) {
-		console.warn(`Transformer returned a falsy value on "${name}"! No changes have been made.`);
-		return;
+	if (options.transformer) {
+		const maybeJSON = await options.transformer(data.json);
+		if (!maybeJSON) {
+			console.warn(`Transformer returned a falsy value on "${name}"! No changes have been made.`);
+			return;
+		} else {
+			data.json = maybeJSON;
+		}
 	}
 
 	const { json, dir } = data;
