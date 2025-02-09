@@ -14,6 +14,11 @@ const defaultOptions: DefaultOptions = {
 	dataDirectory: "data",
 };
 
+function getSafeFilename(filename: string) {
+	// eslint-disable-next-line regexp/no-obscure-range
+	return filename.replace(/[^a-zA-Z0-9А-я]/g, "_");
+}
+
 async function onUpdate(data: { json: Document["_source"]; dir: string }, client: any, options: typeof defaultOptions) {
 	console.log("Received an update:", data.json.name);
 	const name = data.json.name;
@@ -28,7 +33,7 @@ async function onUpdate(data: { json: Document["_source"]; dir: string }, client
 
 	// Get a list of existing file paths
 	const existingFiles = fs.readdirSync(`${options.dataDirectory}/${dir}`);
-	const newFilePath = `${options.dataDirectory}/${dir}/${json.name}-${json._id}.json`;
+	const newFilePath = `${options.dataDirectory}/${dir}/${getSafeFilename(json.name as string)}_${json._id}.json`;
 
 	// Check if the JSON exists. If it doesn't, check for any previous versions of the same file and delete them.
 	if (!fs.existsSync(newFilePath)) {
