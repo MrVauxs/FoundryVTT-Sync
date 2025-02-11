@@ -1,8 +1,6 @@
 /* eslint-disable no-console */
 import type Document from "foundry-pf2e/foundry/common/abstract/document.d.ts";
 
-const { id: moduleID } = __VTT_SYNC_MODULE__;
-
 interface CreateOptions {
 	data: (Record<string, any>)[];
 	modifiedTime: number;
@@ -55,7 +53,9 @@ function documentExportToCLI(rootDoc: Document) {
 }
 
 export function addHooks(hooks: Record<string, number>) {
+	const { id: moduleID } = __VTT_SYNC_MODULE__;
 	console.groupCollapsed("[foundryvtt-sync] Mounting hooks...");
+
 	for (const documentType of CONST.COMPENDIUM_DOCUMENT_TYPES) {
 		for (const embed of Object.values(CONFIG[documentType].documentClass.schema.fields)
 			.filter(x => x instanceof foundry.data.fields.EmbeddedCollectionField)
@@ -65,6 +65,8 @@ export function addHooks(hooks: Record<string, number>) {
 				if (!document.pack || !document.pack.startsWith(moduleID)) return;
 
 				let parent: Document | null = document;
+				if (!parent.parent) return false; // If we are already at the top, let the updateCompendium hook handle that.
+
 				let highestParent: Document | null = null;
 				while (parent) {
 					parent = parent.parent;

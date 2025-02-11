@@ -1,4 +1,3 @@
-const { id: moduleID } = __VTT_SYNC_MODULE__;
 function documentExportToCLI(rootDoc) {
     const json = rootDoc.toJSON();
     json._key = `!${rootDoc.collectionName}!${rootDoc.id}`;
@@ -21,6 +20,7 @@ function documentExportToCLI(rootDoc) {
     return json;
 }
 export function addHooks(hooks) {
+    const { id: moduleID } = __VTT_SYNC_MODULE__;
     console.groupCollapsed("[foundryvtt-sync] Mounting hooks...");
     for (const documentType of CONST.COMPENDIUM_DOCUMENT_TYPES) {
         for (const embed of Object.values(CONFIG[documentType].documentClass.schema.fields)
@@ -30,6 +30,8 @@ export function addHooks(hooks) {
                 if (!document.pack || !document.pack.startsWith(moduleID))
                     return;
                 let parent = document;
+                if (!parent.parent)
+                    return false; // If we are already at the top, let the updateCompendium hook handle that.
                 let highestParent = null;
                 while (parent) {
                     parent = parent.parent;
