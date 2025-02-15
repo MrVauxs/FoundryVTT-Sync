@@ -137,30 +137,35 @@ export default function compendiumSync() {
                     }, "LISTENER");
                 }
                 // #endregion
-                ui.notifications.info("Compendium Sync is now active.");
                 const compendia = game.packs.filter(c => c.metadata.packageName === moduleID);
-                foundry.applications.api.DialogV2.confirm({
-                    window: { title: "foundryvtt-sync" },
-                    content: `<div><p>Sync <b>${compendia.length}</b> <code style="display: inline-block; padding: 3px">${moduleID}</code> compendiums to the file system?</p><ol style="columns: 2; margin: 0.5rem 0 0 0;">${compendia.map(c => `<li>${c.metadata.name}`).join("</li>")}</ol></div>`,
-                    yes: {
-                        default: false,
-                        callback: async () => {
-                            compendia.forEach(async (compendium) => {
-                                const documents = await compendium.getDocuments();
-                                [...documents, ...compendium.folders].forEach((doc) => {
-                                    import.meta.hot?.send("foundryvtt-compendium-sync:vtt-update", {
-                                        json: documentExportToCLI(doc),
-                                        dir: compendium.metadata.name,
+                if (compendia.length) {
+                    foundry.applications.api.DialogV2.confirm({
+                        window: { title: "foundryvtt-sync" },
+                        content: `<div><p>Sync <b>${compendia.length}</b> <code style="display: inline-block; padding: 3px">${moduleID}</code> compendiums to the file system?</p><ol style="columns: 2; margin: 0.5rem 0 0 0;">${compendia.map(c => `<li>${c.metadata.name}`).join("</li>")}</ol></div>`,
+                        yes: {
+                            default: false,
+                            callback: async () => {
+                                compendia.forEach(async (compendium) => {
+                                    const documents = await compendium.getDocuments();
+                                    [...documents, ...compendium.folders].forEach((doc) => {
+                                        import.meta.hot?.send("foundryvtt-compendium-sync:vtt-update", {
+                                            json: documentExportToCLI(doc),
+                                            dir: compendium.metadata.name,
+                                        });
                                     });
                                 });
-                            });
+                            },
                         },
-                    },
-                    no: {
-                        default: true,
-                    },
-                });
-                addHooks(hooks);
+                        no: {
+                            default: true,
+                        },
+                    });
+                    addHooks(hooks);
+                    ui.notifications.info("Compendium Sync is now active.");
+                }
+                else {
+                    ui.notifications.warn("foundryvtt-sync: Could not find compendiums matching the module ID.");
+                }
             }),
         };
         // HMR
