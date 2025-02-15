@@ -23,7 +23,9 @@ export function addHooks(hooks) {
     const { id: moduleID } = __VTT_SYNC_MODULE__;
     console.groupCollapsed("[foundryvtt-sync] Mounting hooks...");
     for (const documentType of CONST.COMPENDIUM_DOCUMENT_TYPES) {
-        for (const embed of Object.values(CONFIG[documentType].documentClass.schema.fields)
+        for (const embed of 
+        // @ts-expect-error Missing Types
+        Object.values(CONFIG[documentType].documentClass.schema.fields)
             .filter(x => x instanceof foundry.data.fields.EmbeddedCollectionField)
             .map(x => x.element.documentName)) {
             function getRootDocument(document) {
