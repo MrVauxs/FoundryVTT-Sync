@@ -114,13 +114,15 @@ export default function vttSync(moduleJSON: { id: string }, options = defaultOpt
 					&& file.endsWith("json")
 					&& !file.includes("/_deleted")
 				) {
-					const content = await read();
-					const data = JSON.parse(content);
-					server.ws.send({
-						type: "custom",
-						event: "foundryvtt-compendium-sync:system-update",
-						data: { json: JSON.stringify(data), file, timestamp },
-					});
+					setTimeout(async () => {
+						const content = await read();
+						const data = JSON.parse(content);
+						server.ws.send({
+							type: "custom",
+							event: "foundryvtt-compendium-sync:system-update",
+							data: { json: JSON.stringify(data), file, timestamp },
+						});
+					}, 500);
 				}
 			},
 			config: () => ({ define: { __VTT_SYNC_MODULE__: moduleJSON } }),
@@ -151,7 +153,7 @@ export default function vttSync(moduleJSON: { id: string }, options = defaultOpt
 
 				async function compileMultiple(packFolders: fs.Dirent[], previous: string) {
 					for (const pack of packFolders) {
-						if (pack.isDirectory()) {
+						if (pack.isDirectory() && pack.name !== "_deleted") {
 							const filepath = path.resolve(previous, pack.name);
 							const files = fs.readdirSync(filepath, { withFileTypes: true });
 
