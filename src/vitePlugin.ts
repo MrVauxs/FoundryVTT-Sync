@@ -15,13 +15,13 @@ let hasInjectedCompendiumSync = false;
 interface DefaultOptions {
 	dataDirectory?: string;
 	outputDirectory?: string;
-	transformer?: (doc: Document["_source"]) => Promise<Document["_source"]> | Document["_source"] | Promise<false> | false;
+	transformer?: (doc: Document["_source"]) => Promise<void> | void | Promise<false> | false;
 }
 
 const defaultOptions: DefaultOptions = {
 	dataDirectory: "data",
 	outputDirectory: "packs",
-	transformer: doc => doc,
+	transformer: () => {},
 } as const;
 
 function getSafeFilename(filename: string) {
@@ -38,12 +38,10 @@ async function onUpdate(
 	const name = data.json.name;
 
 	if (options.transformer) {
-		const maybeJSON = await options.transformer(data.json);
-		if (!maybeJSON) {
+		const denied = await options.transformer(data.json);
+		if (!denied) {
 			console.warn(`Transformer returned a falsy value on "${name}"! No changes have been made.`);
 			return;
-		} else {
-			data.json = maybeJSON;
 		}
 	}
 
