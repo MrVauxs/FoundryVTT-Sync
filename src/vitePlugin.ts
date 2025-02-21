@@ -39,7 +39,7 @@ async function onUpdate(
 
 	if (options.transformer) {
 		const denied = await options.transformer(data.json);
-		if (!denied) {
+		if (denied === false) {
 			console.warn(`Transformer returned a falsy value on "${name}"! No changes have been made.`);
 			return;
 		}
