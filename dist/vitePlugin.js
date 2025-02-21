@@ -6,6 +6,7 @@ let hasInjectedCompendiumSync = false;
 const defaultOptions = {
     dataDirectory: "data",
     outputDirectory: "packs",
+    transformer: doc => doc,
 };
 function getSafeFilename(filename) {
     // eslint-disable-next-line regexp/no-obscure-range
@@ -69,7 +70,18 @@ function onDelete(id, dir, options) {
         }
     }
 }
-export default function vttSync(moduleJSON, options = defaultOptions) {
+/**
+ *
+ * @param moduleJSON The module.json data. Best imported raw.
+ * @param moduleJSON.id The module ID.
+ * @param _options Where to store, compile, and how to transform data.
+ */
+export default function vttSync(moduleJSON, _options) {
+    const options = _options;
+    for (const key in defaultOptions) {
+        // @ts-expect-error I can't be arsed to make this type-safe, I am assigning it the same keys.
+        options[key] ??= defaultOptions[key];
+    }
     return [
         {
             name: "foundryvtt-sync:serve",
@@ -109,7 +121,7 @@ export default function vttSync(moduleJSON, options = defaultOptions) {
             apply: "build",
             enforce: "post",
             configResolved() {
-                const outDir = path.resolve(process.cwd(), defaultOptions.outputDirectory);
+                const outDir = path.resolve(process.cwd(), options.outputDirectory);
                 log(`Cleaning ${outDir}...`);
                 if (fs.existsSync(outDir)) {
                     const filesToClean = (fs.readdirSync(outDir)).map(dirName => path.resolve(outDir, dirName));
@@ -139,8 +151,8 @@ export default function vttSync(moduleJSON, options = defaultOptions) {
                     }
                 }
                 log(`Compiling to ${outDir}...`);
-                const packFolders = fs.readdirSync(defaultOptions.dataDirectory, { withFileTypes: true });
-                compileMultiple(packFolders, defaultOptions.dataDirectory);
+                const packFolders = fs.readdirSync(options.dataDirectory, { withFileTypes: true });
+                compileMultiple(packFolders, options.dataDirectory);
             },
         },
     ];
