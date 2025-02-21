@@ -7,23 +7,33 @@ import { log } from "./logs.js";
 
 let hasInjectedCompendiumSync = false;
 
+/**
+ * @prop { dataDirectory } - The directory to watch for updates in. Defaults to "data".
+ * @prop { outputDirectory } - The directory to write the pack files to. Defaults to "packs".
+ * @prop { transformer } - A function that takes a Document["_source"] and returns a Promise<Document["_source"]> | Document["_source"] | Promise<false> | false. This is used to transform the data before it is written to the pack file. Defaults to no transformation.
+ */
 interface DefaultOptions {
-	dataDirectory: string;
-	outputDirectory: string;
+	dataDirectory?: string;
+	outputDirectory?: string;
 	transformer?: (doc: Document["_source"]) => Promise<Document["_source"]> | Document["_source"] | Promise<false> | false;
 }
 
 const defaultOptions: DefaultOptions = {
 	dataDirectory: "data",
 	outputDirectory: "packs",
-};
+	transformer: doc => doc,
+} as const;
 
 function getSafeFilename(filename: string) {
 	// eslint-disable-next-line regexp/no-obscure-range
 	return filename.replace(/[^a-zA-Z0-9А-я]/g, "_");
 }
 
-async function onUpdate(data: { json: Document["_source"]; dir: string }, client: any, options: typeof defaultOptions) {
+async function onUpdate(
+	data: { json: Document["_source"]; dir: string },
+	client: any,
+	options: DefaultOptions,
+) {
 	log(`Received an update: ${data.json.name}`);
 	const name = data.json.name;
 
@@ -66,7 +76,7 @@ async function onUpdate(data: { json: Document["_source"]; dir: string }, client
 	client.send("foundryvtt-compendium-sync:vtt-update:response", { data });
 }
 
-function onDelete(id: string, dir: string, options: typeof defaultOptions) {
+function onDelete(id: string, dir: string, options: DefaultOptions) {
 	// Get a list of existing file paths
 	const existingFiles = fs.readdirSync(`${options.dataDirectory}/${dir}`);
 
@@ -91,7 +101,19 @@ function onDelete(id: string, dir: string, options: typeof defaultOptions) {
 	}
 }
 
-export default function vttSync(moduleJSON: { id: string }, options = defaultOptions): Plugin[] {
+/**
+ *
+ * @param moduleJSON The module.json data. Best imported raw.
+ * @param moduleJSON.id The module ID.
+ * @param _options Where to store, compile, and how to transform data.
+ */
+export default function vttSync(moduleJSON: { id: string }, _options: DefaultOptions): Plugin[] {
+	const options = _options as Required<DefaultOptions>;
+	for (const key in defaultOptions) {
+		// @ts-expect-error I can't be arsed to make this type-safe, I am assigning it the same keys.
+		options[key] ??= defaultOptions[key];
+	}
+
 	return [
 		{
 			name: "foundryvtt-sync:serve",
@@ -140,7 +162,7 @@ export default function vttSync(moduleJSON: { id: string }, options = defaultOpt
 			apply: "build",
 			enforce: "post",
 			configResolved() {
-				const outDir = path.resolve(process.cwd(), defaultOptions.outputDirectory);
+				const outDir = path.resolve(process.cwd(), options.outputDirectory);
 				log(`Cleaning ${outDir}...`);
 				if (fs.existsSync(outDir)) {
 					const filesToClean = (fs.readdirSync(outDir)).map(dirName => path.resolve(outDir, dirName));
@@ -171,8 +193,8 @@ export default function vttSync(moduleJSON: { id: string }, options = defaultOpt
 				}
 
 				log(`Compiling to ${outDir}...`);
-				const packFolders = fs.readdirSync(defaultOptions.dataDirectory, { withFileTypes: true });
-				compileMultiple(packFolders, defaultOptions.dataDirectory);
+				const packFolders = fs.readdirSync(options.dataDirectory, { withFileTypes: true });
+				compileMultiple(packFolders, options.dataDirectory);
 			},
 		},
 	] satisfies Plugin[];
