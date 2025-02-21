@@ -8,7 +8,7 @@ import type { Plugin } from "vite";
 interface DefaultOptions {
     dataDirectory?: string;
     outputDirectory?: string;
-    transformer?: (doc: Document["_source"]) => Promise<Document["_source"]> | Document["_source"] | Promise<false> | false;
+    transformer?: (doc: Document["_source"]) => Promise<void> | void | Promise<false> | false;
 }
 /**
  *

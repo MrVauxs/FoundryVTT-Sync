@@ -6,7 +6,7 @@ let hasInjectedCompendiumSync = false;
 const defaultOptions = {
     dataDirectory: "data",
     outputDirectory: "packs",
-    transformer: doc => doc,
+    transformer: () => { },
 };
 function getSafeFilename(filename) {
     // eslint-disable-next-line regexp/no-obscure-range
@@ -16,13 +16,10 @@ async function onUpdate(data, client, options) {
     log(`Received an update: ${data.json.name}`);
     const name = data.json.name;
     if (options.transformer) {
-        const maybeJSON = await options.transformer(data.json);
-        if (!maybeJSON) {
+        const denied = await options.transformer(data.json);
+        if (!denied) {
             console.warn(`Transformer returned a falsy value on "${name}"! No changes have been made.`);
             return;
-        }
-        else {
-            data.json = maybeJSON;
         }
     }
     const { json, dir } = data;
