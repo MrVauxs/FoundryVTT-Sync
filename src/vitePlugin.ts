@@ -168,7 +168,7 @@ export default function vttSync(moduleJSON: { id: string }, _options: DefaultOpt
 						fs.rmSync(file, { recursive: true });
 					}
 				} else {
-					fs.mkdirSync(outDir);
+					fs.mkdirSync(outDir, { recursive: true });
 				}
 
 				async function compileMultiple(packFolders: fs.Dirent[], previous: string) {
