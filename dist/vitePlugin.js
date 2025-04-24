@@ -127,7 +127,7 @@ export default function vttSync(moduleJSON, _options) {
                     }
                 }
                 else {
-                    fs.mkdirSync(outDir);
+                    fs.mkdirSync(outDir, { recursive: true });
                 }
                 async function compileMultiple(packFolders, previous) {
                     for (const pack of packFolders) {
