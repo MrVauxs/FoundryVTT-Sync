@@ -94,12 +94,17 @@ export default function vttSync(moduleJSON, _options) {
                     && !file.includes("/_deleted")) {
                     setTimeout(async () => {
                         const content = await read();
-                        const data = JSON.parse(content);
-                        server.ws.send({
-                            type: "custom",
-                            event: "foundryvtt-compendium-sync:system-update",
-                            data: { json: JSON.stringify(data), file, timestamp },
-                        });
+                        try {
+                            const data = JSON.parse(content);
+                            server.ws.send({
+                                type: "custom",
+                                event: "foundryvtt-compendium-sync:system-update",
+                                data: { json: JSON.stringify(data), file, timestamp },
+                            });
+                        }
+                        catch (err) {
+                            console.warn(err);
+                        }
                     }, 500);
                 }
             },
