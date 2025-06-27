@@ -144,7 +144,7 @@ export default function vttSync(moduleJSON, _options) {
                         if (pack.isDirectory() && pack.name !== "_deleted") {
                             const filepath = path.resolve(previous, pack.name);
                             const files = fs.readdirSync(filepath, { withFileTypes: true });
-                            if (files.some(x => x.isDirectory())) {
+                            if (files.some(x => x.isDirectory() && x.name !== "_deleted")) {
                                 await compileMultiple(files, `${previous}/${pack.name}`);
                             }
                             else {
