@@ -47,9 +47,15 @@ async function onUpdate(
 
 	const { json, dir } = data;
 
+	// Ensure the directory exists, create if not
+	const targetDir = `${options.dataDirectory}/${dir}`;
+	if (!fs.existsSync(targetDir)) {
+		fs.mkdirSync(targetDir, { recursive: true });
+	}
+
 	// Get a list of existing file paths
-	const existingFiles = fs.readdirSync(`${options.dataDirectory}/${dir}`);
-	const newFilePath = `${options.dataDirectory}/${dir}/${getSafeFilename(json.name as string)}_${json._id}.json`;
+	const existingFiles = fs.readdirSync(targetDir);
+	const newFilePath = `${targetDir}/${getSafeFilename(json.name as string)}_${json._id}.json`;
 
 	// Check if the JSON exists. If it doesn't, check for any previous versions of the same file and delete them.
 	if (!fs.existsSync(newFilePath)) {
