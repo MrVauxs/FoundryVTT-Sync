@@ -158,8 +158,13 @@ export default function vttSync(moduleJSON, _options) {
                     }
                 }
                 log(`Compiling to ${outDir}...`);
-                const packFolders = fs.readdirSync(options.dataDirectory, { withFileTypes: true });
-                compileMultiple(packFolders, options.dataDirectory);
+                try {
+                    const packFolders = fs.readdirSync(options.dataDirectory, { withFileTypes: true });
+                    compileMultiple(packFolders, options.dataDirectory);
+                }
+                catch {
+                    console.warn(`The given data directory (${options.dataDirectory}) does not exist!`);
+                }
             },
         },
     ];
