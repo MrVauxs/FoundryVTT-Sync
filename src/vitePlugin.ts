@@ -1,6 +1,7 @@
 import type { Document } from "foundry-pf2e/foundry/common/abstract/module.js";
 import type { Plugin } from "vite";
 import fs from "node:fs";
+import { EOL } from "node:os";
 import path from "node:path";
 import { compilePack } from "@foundryvtt/foundryvtt-cli";
 import { log } from "./logs.js";
@@ -21,7 +22,7 @@ interface DefaultOptions {
 const defaultOptions: DefaultOptions = {
 	dataDirectory: "data",
 	outputDirectory: "packs",
-	transformer: () => {},
+	transformer: () => { },
 } as const;
 
 function getSafeFilename(filename: string) {
@@ -74,9 +75,12 @@ async function onUpdate(
 
 	fs.writeFileSync(
 		newFilePath,
-		`${JSON.stringify(json, null, "\t")}\r\n`,
+		JSON.stringify(json, null, "\t"),
 		"utf8",
 	);
+
+	fs.appendFileSync(newFilePath, EOL, "utf8");
+	fs.appendFileSync(newFilePath, EOL, "utf8");
 
 	client.send("foundryvtt-compendium-sync:vtt-update:response", { data });
 }

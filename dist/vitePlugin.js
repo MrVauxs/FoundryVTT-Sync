@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { EOL } from "node:os";
 import path from "node:path";
 import { compilePack } from "@foundryvtt/foundryvtt-cli";
 import { log } from "./logs.js";
@@ -45,7 +46,9 @@ async function onUpdate(data, client, options) {
             }
         }
     }
-    fs.writeFileSync(newFilePath, `${JSON.stringify(json, null, "\t")}\r\n`, "utf8");
+    fs.writeFileSync(newFilePath, JSON.stringify(json, null, "\t"), "utf8");
+    fs.appendFileSync(newFilePath, EOL, "utf8");
+    fs.appendFileSync(newFilePath, EOL, "utf8");
     client.send("foundryvtt-compendium-sync:vtt-update:response", { data });
 }
 function onDelete(id, dir, options) {
