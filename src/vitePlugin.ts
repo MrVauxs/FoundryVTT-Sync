@@ -74,7 +74,7 @@ async function onUpdate(
 
 	fs.writeFileSync(
 		newFilePath,
-		JSON.stringify(json, null, "\t"),
+		`${JSON.stringify(json, null, "\t")}\n`,
 	);
 
 	client.send("foundryvtt-compendium-sync:vtt-update:response", { data });
