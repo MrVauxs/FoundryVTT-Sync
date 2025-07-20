@@ -117,7 +117,7 @@ function onDelete(id: string, dir: string, options: DefaultOptions) {
  * @param _options Where to store, compile, and how to transform data.
  */
 export default function vttSync(moduleJSON: { id: string }, _options: DefaultOptions): Plugin[] {
-	const options = _options as Required<DefaultOptions>;
+	const options = (_options || {}) as Required<DefaultOptions>;
 	for (const key in defaultOptions) {
 		// @ts-expect-error I can't be arsed to make this type-safe, I am assigning it the same keys.
 		options[key] ??= defaultOptions[key];
