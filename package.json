@@ -21,16 +21,16 @@
 		"lint:fix": "eslint . --fix --cache"
 	},
 	"dependencies": {
-		"@foundryvtt/foundryvtt-cli": "^1.0.4",
-		"chalk": "^5.4.1"
+		"@foundryvtt/foundryvtt-cli": "^3.0.3",
+		"chalk": "^5.6.2"
 	},
 	"devDependencies": {
-		"@antfu/eslint-config": "^4.1.1",
-		"eslint": "^9.20.0",
-		"eslint-plugin-antfu": "^3.0.0",
-		"eslint-plugin-format": "^1.0.1",
+		"@antfu/eslint-config": "^4.19.0",
+		"eslint": "^9.39.2",
+		"eslint-plugin-antfu": "^3.2.0",
+		"eslint-plugin-format": "^1.4.0",
 		"foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
-		"typescript": "^5.7.3",
-		"vite": "^5.4.14"
+		"typescript": "^5.9.3",
+		"vite": "^5.4.21"
 	}
 }
