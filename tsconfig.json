@@ -8,11 +8,7 @@
 		"baseUrl": ".",
 		"module": "NodeNext",
 		"moduleResolution": "nodenext",
-		"types": [
-			"vite/client",
-			"foundry-pf2e",
-			"foundry-pf2e/lib-wrapper"
-		],
+		"types": ["@7h3laughingman/foundry-types", "vite/client"],
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitOverride": true,

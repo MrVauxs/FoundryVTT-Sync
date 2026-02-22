@@ -1,4 +1,4 @@
-import type { Document } from "foundry-pf2e/foundry/common/abstract/module.js";
+import type Document from "@7h3laughingman/foundry-types/common/abstract/document.mjs";
 import type { Plugin } from "vite";
 import fs from "node:fs";
 import { EOL } from "node:os";
@@ -141,10 +141,7 @@ export default function vttSync(moduleJSON: { id: string }, _options: DefaultOpt
 				);
 			},
 			async handleHotUpdate({ file, server, timestamp, read }) {
-				if (file.startsWith(`${options.dataDirectory}/`)
-					&& file.endsWith("json")
-					&& !file.includes("/_deleted")
-				) {
+				if (file.startsWith(`${options.dataDirectory}/`) && file.endsWith("json") && !file.includes("/_deleted")) {
 					setTimeout(async () => {
 						const content = await read();
 						try {
@@ -154,9 +151,7 @@ export default function vttSync(moduleJSON: { id: string }, _options: DefaultOpt
 								event: "foundryvtt-compendium-sync:system-update",
 								data: { json: JSON.stringify(data), file, timestamp },
 							});
-						} catch (err) {
-							console.warn(err);
-						}
+						} catch (err) { console.warn(err); }
 					}, 500);
 				}
 			},
