@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
-import type Document from "foundry-pf2e/foundry/common/abstract/document.d.ts";
+
+import type CompendiumCollection from "@7h3laughingman/foundry-types/client/documents/collections/compendium-collection.mjs";
+import type { Document } from "@7h3laughingman/foundry-types/common/abstract/_module.mjs";
 
 interface CreateOptions {
 	data: (Record<string, any>)[];
