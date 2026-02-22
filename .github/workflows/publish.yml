@@ -39,4 +39,4 @@ jobs:
         run: npm run build
 
       - name: Publish Package
-        run: npm publish
+        run: npm publish --provenance

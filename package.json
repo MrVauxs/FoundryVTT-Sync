@@ -76,5 +76,8 @@
 		"eslint-plugin-format": "^1.4.0",
 		"typescript": "^5.9.3",
 		"vite": "^5.4.21"
+	},
+	"publishConfig": {
+		"provenance": true
 	}
 }
