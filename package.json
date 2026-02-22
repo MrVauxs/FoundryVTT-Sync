@@ -69,6 +69,7 @@
 		"unplugin": "^3.0.0"
 	},
 	"devDependencies": {
+		"@7h3laughingman/foundry-helpers": "^13.351.7",
 		"@7h3laughingman/foundry-types": "^13.351.10",
 		"@antfu/eslint-config": "^4.19.0",
 		"eslint": "^9.39.2",
