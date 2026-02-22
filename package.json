@@ -1,7 +1,7 @@
 {
 	"name": "foundryvtt-sync",
 	"type": "module",
-	"version": "1.0.6",
+	"version": "2.0.0",
 	"description": "A cross-bundler plugin to sync FoundryVTT compendiums with your file system. Supports Vite, Rollup, Webpack, and esbuild.",
 	"author": "Vauxs",
 	"license": "MIT",
@@ -38,6 +38,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"prepublishOnly": "tsc -p .",
 		"build": "tsc -p .",
 		"lint": "eslint . --cache",
 		"lint:fix": "eslint . --fix --cache"
