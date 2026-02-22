@@ -11,5 +11,5 @@ export default function foundryvttSyncRollup(
 	moduleJSON: { id: string },
 	options?: Parameters<typeof createPlugin>[1],
 ) {
-	return createPlugin(moduleJSON, options).rollup;
+	return createPlugin(moduleJSON, options).rollup();
 }

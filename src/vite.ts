@@ -12,5 +12,5 @@ export default function foundryvttSyncVite(
 	moduleJSON: { id: string },
 	options?: Parameters<typeof createPlugin>[1],
 ) {
-	return createPlugin(moduleJSON, options).vite;
+	return createPlugin(moduleJSON, options).vite();
 }
