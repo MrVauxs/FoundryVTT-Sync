@@ -8,7 +8,7 @@
 		"baseUrl": ".",
 		"module": "NodeNext",
 		"moduleResolution": "nodenext",
-		"types": ["@7h3laughingman/foundry-types", "@7h3laughingman/pf2e-helpers/lib-wrapper", "vite/client"],
+		"types": ["@7h3laughingman/foundry-types", "foundry-pf2e/lib-wrapper", "vite/client"],
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitOverride": true,
@@ -22,13 +22,12 @@
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"isolatedModules": true,
-		"verbatimModuleSyntax": true,
 		"skipLibCheck": true
 	},
 	"include": [
 		"src/"
 	],
 	"exclude": [
-		"node_modules/*"
+		"node_modules"
 	]
 }
