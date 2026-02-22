@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 function documentExportToCLI(rootDoc) {
     const json = rootDoc.toJSON();
     json._key = `!${rootDoc.collectionName}!${rootDoc.id}`;
