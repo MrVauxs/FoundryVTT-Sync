@@ -201,7 +201,11 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 			},
 
 			handleHotUpdate(ctx) {
-				if (ctx.file.startsWith(`${options.dataDirectory}/`) && ctx.file.endsWith("json") && !ctx.file.includes("/_deleted")) {
+				if (
+					ctx.file.startsWith(`${options.dataDirectory}/`)
+					&& ctx.file.endsWith("json")
+					&& !ctx.file.includes("/_deleted")
+				) {
 					setTimeout(async () => {
 						const content = await ctx.read();
 						try {
