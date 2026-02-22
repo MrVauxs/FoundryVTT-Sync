@@ -74,7 +74,6 @@
 		"eslint": "^9.39.2",
 		"eslint-plugin-antfu": "^3.2.0",
 		"eslint-plugin-format": "^1.4.0",
-		"foundry-pf2e": "github:7H3LaughingMan/foundry-pf2e",
 		"typescript": "^5.9.3",
 		"vite": "^5.4.21"
 	}
