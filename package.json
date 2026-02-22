@@ -10,6 +10,7 @@
 		"type": "git",
 		"url": "git+https://github.com/MrVauxs/FoundryVTT-Sync.git"
 	},
+	"engineStrict": true,
 	"bugs": {
 		"url": "https://github.com/MrVauxs/FoundryVTT-Sync/issues"
 	},
@@ -37,6 +38,9 @@
 	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"engines": {
+		"node": "24"
+	},
 	"scripts": {
 		"build": "tsc -p .",
 		"lint": "eslint . --cache",
