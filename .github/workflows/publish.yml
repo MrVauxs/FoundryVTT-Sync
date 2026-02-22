@@ -16,24 +16,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: "package.json"
+          package-manager-cache: false
+          registry-url: "https://registry.npmjs.org"
 
       - name: Cache
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          path: node_modules/
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
 
       - if: steps.cache.outputs.cache-hit != 'true'
         name: Clean Install
-        run: bun install --frozen-lockfile
+        run: npm clean-install
 
       - name: Build Package
-        run: bun run build
+        run: npm run build
 
       - name: Publish Package
-        run: bun publish
-        env:
-          NPM_CONFIG_TOKEN: ${{ secrets.npm_token }}
+        run: npm publish
