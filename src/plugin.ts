@@ -11,17 +11,20 @@ import { log } from "./logs.js";
  * @prop { dataDirectory } - The directory to watch for updates in. Defaults to "data".
  * @prop { outputDirectory } - The directory to write the pack files to. Defaults to "packs".
  * @prop { transformer } - A function that takes a Document["_source"] and returns a Promise<Document["_source"]> | Document["_source"] | Promise<false> | false. This is used to transform the data before it is written to the pack file. Defaults to no transformation.
+ * @prop { ignoreAdventureHMR } - Whether to ignore hot updates for Adventure type documents. This is useful if you are using the expandAdventures option when building your packs, as the sync plugin does not yet support that option.
  */
 export interface PluginOptions {
 	dataDirectory?: string;
 	outputDirectory?: string;
 	transformer?: (doc: Document["_source"]) => Promise<void> | void | Promise<false> | false;
+	ignoreAdventureHMR?: boolean;
 }
 
 const defaultOptions: Required<PluginOptions> = {
 	dataDirectory: "data",
 	outputDirectory: "packs",
 	transformer: () => { },
+	ignoreAdventureHMR: false,
 } as const;
 
 function getSafeFilename(filename: string) {
@@ -36,6 +39,11 @@ async function onUpdate(
 ) {
 	log(`Received an update: ${data.json.name}`);
 	const name = data.json.name;
+
+	if (options.ignoreAdventureHMR && data.json.type === "Adventure") {
+		log(`Ignoring update for Adventure document: ${name}`);
+		return;
+	}
 
 	if (options.transformer) {
 		const denied = await options.transformer(data.json);
@@ -95,6 +103,11 @@ function onDelete(id: string, dir: string, options: Required<PluginOptions>) {
 
 		// Check if the ID of the existing file matches with the incoming data's ID
 		if (fileJson._id === id) {
+			// Skip Adventure documents if ignoreAdventureHMR is enabled
+			if (options.ignoreAdventureHMR && fileJson.type === "Adventure") {
+				log(`Ignoring delete for Adventure document: ${fileJson.name}`);
+				return;
+			}
 			// Create _deleted directory if it doesn't exist yet.
 			if (!fs.existsSync(`${options.dataDirectory}/${dir}/_deleted`)) {
 				fs.mkdirSync(`${options.dataDirectory}/${dir}/_deleted`);
