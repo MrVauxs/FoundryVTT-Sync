@@ -193,7 +193,7 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 		// Cross-bundler: Transform hook for code injection
 		transform(code) {
 			if (!hasInjectedCompendiumSync) {
-				code += `\n\nimport compendiumSync from 'foundryvtt-sync/dist/compendiumSync';\ncompendiumSync()\n\n`;
+				code += `\n\nimport compendiumSync from 'foundryvtt-sync/compendiumSync';\ncompendiumSync()\n\n`;
 				hasInjectedCompendiumSync = true;
 				log("Injected compendium sync code.");
 			}
