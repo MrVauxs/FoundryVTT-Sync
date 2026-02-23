@@ -122,7 +122,7 @@ function onDelete(id: string, dir: string, options: Required<PluginOptions>) {
 	}
 }
 
-function compilePacks(options: Required<PluginOptions>) {
+async function compilePacks(options: Required<PluginOptions>) {
 	const outDir = path.resolve(process.cwd(), options.outputDirectory);
 	log(`Cleaning ${outDir}...`);
 	if (fs.existsSync(outDir)) {
@@ -156,7 +156,7 @@ function compilePacks(options: Required<PluginOptions>) {
 	log(`Compiling to ${outDir}...`);
 	try {
 		const packFolders = fs.readdirSync(options.dataDirectory, { withFileTypes: true });
-		compileMultiple(packFolders, options.dataDirectory);
+		await compileMultiple(packFolders, options.dataDirectory);
 	} catch {
 		console.warn(`The given data directory (${options.dataDirectory}) does not exist!`);
 	}
@@ -173,6 +173,7 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 	const options = { ...defaultOptions, ..._options } as Required<PluginOptions>;
 
 	let hasInjectedCompendiumSync = false;
+	let isDevServer = false;
 
 	return createUnplugin(() => ({
 		name: "foundryvtt-sync",
@@ -183,8 +184,10 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 		},
 
 		// Cross-bundler: Build hook for pack compilation
-		buildStart() {
-			compilePacks(options);
+		// Should NOT be ran on dev server.
+		async buildStart() {
+			if (isDevServer) return;
+			await compilePacks(options);
 		},
 
 		// Cross-bundler: Transform hook for code injection
@@ -200,6 +203,7 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 		// Vite-specific extensions for dev server
 		vite: {
 			configureServer(server: ViteDevServer) {
+				isDevServer = true;
 				server.watcher.add([options.dataDirectory]);
 
 				server.ws.on(
