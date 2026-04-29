@@ -5,7 +5,7 @@
 			"es2022",
 			"dom"
 		],
-		"baseUrl": ".",
+		"rootDir": "./src",
 		"module": "NodeNext",
 		"moduleResolution": "nodenext",
 		"types": ["@7h3laughingman/foundry-types", "@7h3laughingman/foundry-helpers/lib-wrapper", "vite/client"],
@@ -16,7 +16,7 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"declaration": true,
-		"outDir": "dist",
+		"outDir": "./dist",
 		// Best practices
 		"sourceMap": true,
 		"esModuleInterop": true,

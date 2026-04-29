@@ -142,16 +142,12 @@ async function compilePacks(options: Required<PluginOptions>) {
 				const filepath = path.resolve(previous, pack.name);
 				const files = fs.readdirSync(filepath, { withFileTypes: true });
 
-				if (files.some(x => x.isDirectory() && x.name !== "_deleted") && !options.ignoreNestedFolders) {
-					await compileMultiple(files, `${previous}/${pack.name}`);
-				} else {
-					const output = path.resolve(outDir, pack.name);
-					if (!fs.existsSync(output)) {
-						fs.mkdirSync(output, { recursive: true });
-					}
-					const yaml = files.find(x => x.name.endsWith(".yml") || x.name.endsWith(".yaml"));
-					await compilePack(filepath, output, { yaml });
+				const output = path.resolve(outDir, pack.name);
+				if (!fs.existsSync(output)) {
+					fs.mkdirSync(output, { recursive: true });
 				}
+				const yaml = files.find(x => x.name.endsWith(".yml") || x.name.endsWith(".yaml"));
+				await compilePack(filepath, output, { yaml, recursive: true });
 			}
 		}
 	}

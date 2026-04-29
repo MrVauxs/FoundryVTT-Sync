@@ -2,6 +2,11 @@
 
 A cross-bundler plugin to sync FoundryVTT compendiums with your file system. Supports **Vite**, **Rollup**, **Webpack**, and **esbuild**.
 
+> !important
+> The dev functionality currently only supports the following extraction options. Everything else will cause misbehavior.
+> folders: false
+> expandAdventures: false
+
 ## Installation
 
 ```bash
@@ -19,18 +24,18 @@ pnpm add -D foundryvtt-sync
 The Vite integration includes full dev server support with HMR and WebSocket communication.
 
 ```typescript
+import foundryvttSync from "foundryvtt-sync/vite";
 // vite.config.ts
-import { defineConfig } from 'vite';
-import foundryvttSync from 'foundryvtt-sync/vite';
-import moduleJSON from './module.json' with { type: 'json' };
+import { defineConfig } from "vite";
+import moduleJSON from "./module.json" with { type: "json" };
 
 export default defineConfig({
-  plugins: [
-    foundryvttSync(moduleJSON, {
-      dataDirectory: 'data',
-      outputDirectory: 'packs',
-    }),
-  ],
+	plugins: [
+		foundryvttSync(moduleJSON, {
+			dataDirectory: "data",
+			outputDirectory: "packs",
+		}),
+	],
 });
 ```
 
@@ -38,21 +43,21 @@ export default defineConfig({
 
 ```typescript
 // rollup.config.mjs
-import foundryvttSync from 'foundryvtt-sync/rollup';
-import moduleJSON from './module.json' with { type: 'json' };
+import foundryvttSync from "foundryvtt-sync/rollup";
+import moduleJSON from "./module.json" with { type: "json" };
 
 export default {
-  input: 'src/index.js',
-  output: {
-    dir: 'dist',
-    format: 'es',
-  },
-  plugins: [
-    foundryvttSync(moduleJSON, {
-      dataDirectory: 'data',
-      outputDirectory: 'packs',
-    }),
-  ],
+	input: "src/index.js",
+	output: {
+		dir: "dist",
+		format: "es",
+	},
+	plugins: [
+		foundryvttSync(moduleJSON, {
+			dataDirectory: "data",
+			outputDirectory: "packs",
+		}),
+	],
 };
 ```
 
@@ -60,39 +65,39 @@ export default {
 
 ```javascript
 // webpack.config.js
-const foundryvttSync = require('foundryvtt-sync/webpack');
-const moduleJSON = require('./module.json');
+const foundryvttSync = require("foundryvtt-sync/webpack");
+const moduleJSON = require("./module.json");
 
 module.exports = {
-  entry: './src/index.js',
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
-  },
-  plugins: [
-    foundryvttSync(moduleJSON, {
-      dataDirectory: 'data',
-      outputDirectory: 'packs',
-    }),
-  ],
+	entry: "./src/index.js",
+	output: {
+		path: path.resolve(__dirname, "dist"),
+		filename: "bundle.js",
+	},
+	plugins: [
+		foundryvttSync(moduleJSON, {
+			dataDirectory: "data",
+			outputDirectory: "packs",
+		}),
+	],
 };
 ```
 
 ### esbuild
 
 ```javascript
+import { readFileSync } from "node:fs";
 // build.js
-import * as esbuild from 'esbuild';
-import foundryvttSync from 'foundryvtt-sync/esbuild';
-import { readFileSync } from 'fs';
+import * as esbuild from "esbuild";
+import foundryvttSync from "foundryvtt-sync/esbuild";
 
-const moduleJSON = JSON.parse(readFileSync('./module.json'));
+const moduleJSON = JSON.parse(readFileSync("./module.json"));
 
 await esbuild.build({
-  entryPoints: ['src/index.js'],
-  bundle: true,
-  outfile: 'dist/bundle.js',
-  plugins: [foundryvttSync(moduleJSON)],
+	entryPoints: ["src/index.js"],
+	bundle: true,
+	outfile: "dist/bundle.js",
+	plugins: [foundryvttSync(moduleJSON)],
 });
 ```
 
@@ -102,13 +107,13 @@ The default export is still available for backwards compatibility:
 
 ```typescript
 // vite.config.ts
-import vttSync from 'foundryvtt-sync'; // Returns Plugin[] for Vite
-import moduleJSON from './module.json' with { type: 'json' };
+import vttSync from "foundryvtt-sync"; // Returns Plugin[] for Vite
+import moduleJSON from "./module.json" with { type: "json" };
 
 export default {
-  plugins: [
-    ...vttSync(moduleJSON, { dataDirectory: 'data' }),
-  ],
+	plugins: [
+		...vttSync(moduleJSON, { dataDirectory: "data" }),
+	],
 };
 ```
 
@@ -116,12 +121,12 @@ export default {
 
 ```typescript
 interface PluginOptions {
-  // Your root JSON directory (default: "data")
-  dataDirectory?: string;
-  // Your root Foundry DB directory (default: "packs")
-  outputDirectory?: string;
-  // Runs on the server. Returning false invalidates the entry.
-  transformer?: (doc: Document["_source"]) => Promise<void> | void | Promise<false> | false;
+	// Your root JSON directory (default: "data")
+	dataDirectory?: string;
+	// Your root Foundry DB directory (default: "packs")
+	outputDirectory?: string;
+	// Runs on the server. Returning false invalidates the entry.
+	transformer?: (doc: Document["_source"]) => Promise<void> | void | Promise<false> | false;
 }
 ```
 
@@ -143,13 +148,13 @@ So you don't have to manually disable the module in order to update your local f
 
 ## Bundler Support Matrix
 
-| Feature | Vite | Rollup | Webpack | esbuild |
-|---------|------|--------|---------|---------|
-| Pack compilation | ✅ | ✅ | ✅ | ✅ |
-| Code transform | ✅ | ✅ | ✅ | ✅ |
-| Define globals | ✅ | ✅ | ✅ | ✅ |
-| Dev server HMR | ✅ | ❌ | ❌ | ❌ |
-| WebSocket sync | ✅ | ❌ | ❌ | ❌ |
+| Feature          | Vite | Rollup | Webpack | esbuild |
+| ---------------- | ---- | ------ | ------- | ------- |
+| Pack compilation | ✅    | ✅      | ✅       | ✅       |
+| Code transform   | ✅    | ✅      | ✅       | ✅       |
+| Define globals   | ✅    | ✅      | ✅       | ✅       |
+| Dev server HMR   | ✅    | ❌      | ❌       | ❌       |
+| WebSocket sync   | ✅    | ❌      | ❌       | ❌       |
 
 ## Types
 
