@@ -18,6 +18,7 @@ export interface PluginOptions {
 	outputDirectory?: string;
 	transformer?: (doc: Document["_source"]) => Promise<void> | void | Promise<false> | false;
 	ignoreAdventureHMR?: boolean;
+	ignoreNestedFolders?: boolean;
 }
 
 const defaultOptions: Required<PluginOptions> = {
@@ -25,6 +26,7 @@ const defaultOptions: Required<PluginOptions> = {
 	outputDirectory: "packs",
 	transformer: () => { },
 	ignoreAdventureHMR: false,
+	ignoreNestedFolders: false,
 } as const;
 
 function getSafeFilename(filename: string) {
@@ -140,7 +142,7 @@ async function compilePacks(options: Required<PluginOptions>) {
 				const filepath = path.resolve(previous, pack.name);
 				const files = fs.readdirSync(filepath, { withFileTypes: true });
 
-				if (files.some(x => x.isDirectory() && x.name !== "_deleted")) {
+				if (files.some(x => x.isDirectory() && x.name !== "_deleted") && !options.ignoreNestedFolders) {
 					await compileMultiple(files, `${previous}/${pack.name}`);
 				} else {
 					const output = path.resolve(outDir, pack.name);
