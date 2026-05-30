@@ -172,7 +172,7 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 	const options = { ...defaultOptions, ..._options } as Required<PluginOptions>;
 
 	// let hasInjectedCompendiumSync = false;
-	// let isDevServer = false;
+	let isDevServer = false;
 
 	return createUnplugin(() => ({
 		name: "foundryvtt-sync",
@@ -185,7 +185,7 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 		// Cross-bundler: Build hook for pack compilation
 		// Should NOT be ran on dev server.
 		async buildStart() {
-			// if (isDevServer) return;
+			if (isDevServer) return;
 			await compilePacks(options);
 		},
 
@@ -199,11 +199,13 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 			}
 			return code;
 		},
+		*/
 
 		// Vite-specific extensions for dev server
 		vite: {
 			configureServer(server: ViteDevServer) {
-				isDevServer = true;
+				isDevServer = !!server;
+				/*
 				server.watcher.add([options.dataDirectory]);
 
 				server.ws.on(
@@ -215,9 +217,10 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 					"foundryvtt-compendium-sync:vtt-delete",
 					({ id, dir }) => onDelete(id, dir, options),
 				);
+				*/
 			},
 
-			handleHotUpdate(ctx) {
+			/* handleHotUpdate(ctx) {
 				if (
 					ctx.file.startsWith(`${options.dataDirectory}/`)
 					&& ctx.file.endsWith("json")
@@ -237,9 +240,8 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 						}
 					}, 500);
 				}
-			},
+			}, */
 		},
-		*/
 	}));
 }
 
