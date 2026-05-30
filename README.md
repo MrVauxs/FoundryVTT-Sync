@@ -3,11 +3,7 @@
 A cross-bundler plugin to sync FoundryVTT compendiums with your file system. Supports **Vite**, **Rollup**, **Webpack**, and **esbuild**.
 
 > [!important]
-> The **dev** functionality currently only supports the following extraction options. Everything else will cause misbehavior.
-> ```
-> folders: false
-> expandAdventures: false
-> ```
+> As of v3.0.0, the plugin doesn't have a live-sync functionality due to the plethora of options that might be needed and a much needed refactor to use the new hooks. Future version might have it back, but for now this plugin is basically a build compiler.
 
 ## Installation
 
