@@ -54,7 +54,7 @@ function documentExportToCLI(rootDoc: Document) {
 	return json;
 }
 
-export function addHooks(hooks: Record<string, number>) {
+function addHooks(hooks: Record<string, number>) {
 	const { id: moduleID } = __VTT_SYNC_MODULE__;
 	console.groupCollapsed("[foundryvtt-sync] Mounting hooks...");
 

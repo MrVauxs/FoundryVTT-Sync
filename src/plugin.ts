@@ -190,6 +190,7 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 		},
 
 		// Cross-bundler: Transform hook for code injection
+		/*
 		transform(code) {
 			if (!hasInjectedCompendiumSync) {
 				code += `\n\nimport compendiumSync from 'foundryvtt-sync/compendiumSync';\ncompendiumSync()\n\n`;
@@ -238,6 +239,7 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 				}
 			},
 		},
+		*/
 	}));
 }
 
