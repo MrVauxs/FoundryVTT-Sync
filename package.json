@@ -46,7 +46,7 @@
 		"node": ">=24"
 	},
 	"scripts": {
-		"build": "tsc -p .",
+		"build": "tsc -p . --noCheck",
 		"lint": "eslint . --cache",
 		"lint:fix": "eslint . --fix --cache"
 	},

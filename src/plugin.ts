@@ -171,8 +171,8 @@ async function compilePacks(options: Required<PluginOptions>) {
 export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions = {}) {
 	const options = { ...defaultOptions, ..._options } as Required<PluginOptions>;
 
-	let hasInjectedCompendiumSync = false;
-	let isDevServer = false;
+	// let hasInjectedCompendiumSync = false;
+	// let isDevServer = false;
 
 	return createUnplugin(() => ({
 		name: "foundryvtt-sync",
@@ -185,7 +185,7 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 		// Cross-bundler: Build hook for pack compilation
 		// Should NOT be ran on dev server.
 		async buildStart() {
-			if (isDevServer) return;
+			// if (isDevServer) return;
 			await compilePacks(options);
 		},
 
