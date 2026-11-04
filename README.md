@@ -2,9 +2,6 @@
 
 A cross-bundler plugin to sync FoundryVTT compendiums with your file system. Supports **Vite**, **Rollup**, **Webpack**, and **esbuild**.
 
-> [!important]
-> As of v3.0.0, the plugin doesn't have a live-sync functionality due to the plethora of options that might be needed and a much needed refactor to use the new hooks. Future version might have it back, but for now this plugin is basically a build compiler.
-
 ## Installation
 
 ```bash
@@ -19,7 +16,7 @@ pnpm add -D foundryvtt-sync
 
 ### Vite (Recommended)
 
-The Vite integration includes full dev server support with HMR and WebSocket communication.
+The Vite integration also adds [live sync](#live-sync) while the dev server runs.
 
 ```typescript
 import foundryvttSync from "foundryvtt-sync/vite";
@@ -123,8 +120,13 @@ interface PluginOptions {
 	dataDirectory?: string;
 	// Your root Foundry DB directory (default: "packs")
 	outputDirectory?: string;
-	// Runs on the server. Returning false invalidates the entry.
+	// Live sync runs this on every document before writing it to dataDirectory. Returning false skips the write.
 	transformer?: (doc: Document["_source"]) => Promise<void> | void | Promise<false> | false;
+	// Live sync leaves Adventure documents alone, in both directions (default: false)
+	ignoreAdventureHMR?: boolean;
+	// The foundryvtt-cli extractPack options live sync writes files with. Use the ones from your extract script.
+	// Default: { folders: true, expandAdventures: true, omitVolatile: true, jsonOptions: { space: "\t" } }
+	extractOptions?: ExtractOptions;
 }
 ```
 
@@ -132,13 +134,31 @@ interface PluginOptions {
 
 The plugin comes in two parts:
 
-1. **Dev Server (Vite only)**: During development, it syncs any changes made in your module compendiums to your local file system. Any updates you make to the compendium are immediately exported to the module files you are working on. This connection is two-way — you can also do quick edits inside your editor and it will be reflected in Foundry!
+1. **Build**: During build, it compiles the JSON (or YAML) files in `dataDirectory` into LevelDB packs in `outputDirectory` with `foundryvtt-cli`.
 
-2. **Build**: During build, it compiles the JSON files using `foundryvtt-cli` into the LevelDB database directories.
+2. **Live sync (Vite dev server only)**: While `vite` runs, a GM can turn on a two-way sync between the module's compendiums and your data files.
+
+## Live sync
+
+Run the Vite dev server and open Foundry through it (`npm run dev` in the create-fvtt-module template, port 30001). GMs get a sync button in the bottom right corner, next to the sidebar. It starts off, and a page reload turns it off again, so nothing syncs until you click it. The plugin adds the button's code to your module's entry file (`build.lib.entry` or `build.rollupOptions.input`) on the dev server only. Builds don't contain it.
+
+While it's on:
+
+- Changes made in Foundry are written to `dataDirectory`. That covers creating, editing, renaming and moving documents and folders, and embedded documents such as items on actors or journal pages. A deleted document's file moves to `<dataDirectory>/_deleted/<pack>/`, which the build skips.
+- Saving a file in your editor applies it to the compendium. Only the fields you changed are sent, and they replace the old values instead of merging into them, so a key you delete from the file is deleted in Foundry too. Adding or removing embedded documents in the file adds or removes them in Foundry, and a new file creates a new document.
+- The terminal running Vite logs each write, in both directions.
+
+Things to know:
+
+- To write files, live sync compiles the changed documents into a temporary pack and extracts it with `foundryvtt-cli`. File names, folders and expanded Adventures therefore come out the way your extract script makes them, as long as `extractOptions` uses the same options. The defaults match the [create-fvtt-module](https://github.com/MrVauxs/create-fvtt-module) template.
+- Editors that save as you type leave broken JSON behind. Live sync skips a file it can't parse, logs the error in the terminal once, and waits for the next save. A file that parses but that Foundry rejects (an empty `name`, say) gets one warning in Foundry and in the terminal, and nothing is applied until you fix it.
+- Changes that came from a file are not written back to it. If Foundry adjusts a value (pf2e caps HP at the maximum) or you rename a document in its file, the file keeps what you typed. The next edit made in Foundry rewrites it, under the new name if it has one.
+- Locked compendiums can't change. Unlock the module's compendium in Foundry, then save the file again.
+- With `omitVolatile`, embedded documents that didn't change keep the timestamps already in their file, so diffs show only real changes. Live sync also keeps the file's `_stats.compendiumSource` when Foundry's copy points at the document itself, which pf2e does in memory for compendium content.
 
 ### Isn't This Unsafe?
 
-The plugin does not access the underlying database at all! Instead, it uses websockets to prompt Foundry to update the documents using its own connection, or export the JSON and send it back to Vite to update the module data.
+The plugin never opens your module's database. Foundry applies every change through its own API, and files are written from the data Foundry sends to Vite over the dev server's websocket. The only LevelDB it touches is a temporary copy it uses to name and lay out the files.
 
 ## Why?
 
@@ -149,10 +169,7 @@ So you don't have to manually disable the module in order to update your local f
 | Feature          | Vite | Rollup | Webpack | esbuild |
 | ---------------- | ---- | ------ | ------- | ------- |
 | Pack compilation | ✅    | ✅      | ✅       | ✅       |
-| Code transform   | ✅    | ✅      | ✅       | ✅       |
-| Define globals   | ✅    | ✅      | ✅       | ✅       |
-| Dev server HMR   | ✅    | ❌      | ❌       | ❌       |
-| WebSocket sync   | ✅    | ❌      | ❌       | ❌       |
+| Live sync        | ✅    | ❌      | ❌       | ❌       |
 
 ## Types
 

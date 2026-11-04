@@ -1,17 +1,20 @@
 import type Document from "@7h3laughingman/foundry-types/common/abstract/document.mjs";
-import type { ViteDevServer } from "vite";
+import type { ResolvedConfig, ViteDevServer } from "vite";
+import type { LiveSyncExtractOptions } from "./liveSync.js";
 import fs from "node:fs";
-import { EOL } from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { compilePack } from "@foundryvtt/foundryvtt-cli";
 import { createUnplugin } from "unplugin";
+import { setupLiveSync } from "./liveSync.js";
 import { log } from "./logs.js";
 
 /**
  * @prop { dataDirectory } - The directory to watch for updates in. Defaults to "data".
  * @prop { outputDirectory } - The directory to write the pack files to. Defaults to "packs".
- * @prop { transformer } - A function that takes a Document["_source"] and returns a Promise<Document["_source"]> | Document["_source"] | Promise<false> | false. This is used to transform the data before it is written to the pack file. Defaults to no transformation.
- * @prop { ignoreAdventureHMR } - Whether to ignore hot updates for Adventure type documents. This is useful if you are using the expandAdventures option when building your packs, as the sync plugin does not yet support that option.
+ * @prop { transformer } - A function that takes a Document["_source"] and returns a Promise<Document["_source"]> | Document["_source"] | Promise<false> | false. Live sync runs it on every document before writing it to the data directory. Returning false skips the write. Defaults to no transformation.
+ * @prop { ignoreAdventureHMR } - Whether live sync should leave Adventure documents alone, in both directions.
+ * @prop { extractOptions } - The foundryvtt-cli `extractPack` options live sync uses to write documents, so its files match your extract script. Defaults to `{ folders: true, expandAdventures: true, omitVolatile: true, jsonOptions: { space: "\t" } }`.
  */
 export interface PluginOptions {
 	dataDirectory?: string;
@@ -19,6 +22,7 @@ export interface PluginOptions {
 	transformer?: (doc: Document["_source"]) => Promise<void> | void | Promise<false> | false;
 	ignoreAdventureHMR?: boolean;
 	ignoreNestedFolders?: boolean;
+	extractOptions?: LiveSyncExtractOptions;
 }
 
 const defaultOptions: Required<PluginOptions> = {
@@ -27,101 +31,27 @@ const defaultOptions: Required<PluginOptions> = {
 	transformer: () => { },
 	ignoreAdventureHMR: false,
 	ignoreNestedFolders: false,
+	extractOptions: {
+		folders: true,
+		expandAdventures: true,
+		omitVolatile: true,
+		jsonOptions: { space: "\t" },
+	},
 } as const;
 
-function getSafeFilename(filename: string) {
-	// eslint-disable-next-line regexp/no-obscure-range
-	return filename.replace(/[^a-zA-Z0-9А-я]/g, "_");
-}
+/** Module ID of the browser half of live sync, which the dev server adds to the module's entry. */
+const CLIENT_ID = "virtual:foundryvtt-sync/client";
+const RESOLVED_CLIENT_ID = `\0${CLIENT_ID}`;
+const CLIENT_FILE = fileURLToPath(new URL("./compendiumSync.js", import.meta.url));
 
-async function onUpdate(
-	data: { json: Document["_source"]; dir: string },
-	client: any,
-	options: Required<PluginOptions>,
-) {
-	log(`Received an update: ${data.json.name}`);
-	const name = data.json.name;
+const toPosix = (file: string) => file.replaceAll("\\", "/");
 
-	if (options.ignoreAdventureHMR && data.json.type === "Adventure") {
-		log(`Ignoring update for Adventure document: ${name}`);
-		return;
-	}
-
-	if (options.transformer) {
-		const denied = await options.transformer(data.json);
-		if (denied === false) {
-			console.warn(`Transformer returned a falsy value on "${name}"! No changes have been made.`);
-			return;
-		}
-	}
-
-	const { json, dir } = data;
-
-	// Ensure the directory exists, create if not
-	const targetDir = `${options.dataDirectory}/${dir}`;
-	if (!fs.existsSync(targetDir)) {
-		fs.mkdirSync(targetDir, { recursive: true });
-	}
-
-	// Get a list of existing file paths
-	const existingFiles = fs.readdirSync(targetDir);
-	const newFilePath = `${targetDir}/${getSafeFilename(json.name as string)}_${json._id}.json`;
-
-	// Check if the JSON exists. If it doesn't, check for any previous versions of the same file and delete them.
-	if (!fs.existsSync(newFilePath)) {
-		for (const file of existingFiles) {
-			const filePath = `${options.dataDirectory}/${dir}/${file}`;
-			if (fs.lstatSync(filePath).isDirectory()) continue;
-			const fileJson = JSON.parse(fs.readFileSync(filePath, "utf8"));
-
-			// Check if the ID of the existing file matches with the incoming data's ID
-			if (fileJson._id === json._id) {
-				// If it does, delete the previous file
-				fs.unlinkSync(filePath);
-			}
-		}
-	}
-
-	fs.writeFileSync(
-		newFilePath,
-		JSON.stringify(json, null, "\t"),
-		"utf8",
-	);
-
-	fs.appendFileSync(newFilePath, EOL, "utf8");
-	fs.appendFileSync(newFilePath, EOL, "utf8");
-
-	client.send("foundryvtt-compendium-sync:vtt-update:response", { data });
-}
-
-function onDelete(id: string, dir: string, options: Required<PluginOptions>) {
-	// Get a list of existing file paths
-	const existingFiles = fs.readdirSync(`${options.dataDirectory}/${dir}`);
-
-	for (const file of existingFiles) {
-		const filePath = `${options.dataDirectory}/${dir}/${file}`;
-		if (fs.lstatSync(filePath).isDirectory()) continue;
-		const fileJson = JSON.parse(fs.readFileSync(filePath, "utf8"));
-
-		// Check if the ID of the existing file matches with the incoming data's ID
-		if (fileJson._id === id) {
-			// Skip Adventure documents if ignoreAdventureHMR is enabled
-			if (options.ignoreAdventureHMR && fileJson.type === "Adventure") {
-				log(`Ignoring delete for Adventure document: ${fileJson.name}`);
-				return;
-			}
-			// Create _deleted directory if it doesn't exist yet.
-			if (!fs.existsSync(`${options.dataDirectory}/${dir}/_deleted`)) {
-				fs.mkdirSync(`${options.dataDirectory}/${dir}/_deleted`);
-			}
-			try {
-				// Move to _deleted/ for safekeeping.
-				fs.renameSync(filePath, `${options.dataDirectory}/${dir}/_deleted/${file}`);
-			} catch {
-				console.error("Could not move file to _deleted directory. Remove manually!");
-			}
-		}
-	}
+/** The entry files of the Vite build, which the dev server serves to Foundry as the module's script. */
+function entryFiles(config: ResolvedConfig): Set<string> {
+	const build = config.build as ResolvedConfig["build"] & { rolldownOptions?: { input?: unknown } };
+	const inputs: unknown[] = [build.lib ? build.lib.entry : undefined, build.rolldownOptions?.input ?? build.rollupOptions?.input];
+	const files = inputs.flatMap(input => typeof input === "string" ? [input] : Array.isArray(input) ? input : input && typeof input === "object" ? Object.values(input) : []);
+	return new Set(files.filter(file => typeof file === "string").map(file => toPosix(path.resolve(config.root, file))));
 }
 
 async function compilePacks(options: Required<PluginOptions>) {
@@ -146,7 +76,7 @@ async function compilePacks(options: Required<PluginOptions>) {
 				if (!fs.existsSync(output)) {
 					fs.mkdirSync(output, { recursive: true });
 				}
-				const yaml = files.find(x => x.name.endsWith(".yml") || x.name.endsWith(".yaml"));
+				const yaml = files.some(x => x.name.endsWith(".yml") || x.name.endsWith(".yaml"));
 				await compilePack(filepath, output, { yaml, recursive: true });
 			}
 		}
@@ -169,18 +99,18 @@ async function compilePacks(options: Required<PluginOptions>) {
  * @param _options Where to store, compile, and how to transform data.
  */
 export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions = {}) {
-	const options = { ...defaultOptions, ..._options } as Required<PluginOptions>;
+	const options = {
+		...defaultOptions,
+		..._options,
+		extractOptions: { ...defaultOptions.extractOptions, ..._options.extractOptions },
+	} as Required<PluginOptions>;
 
-	// let hasInjectedCompendiumSync = false;
 	let isDevServer = false;
+	let entries = new Set<string>();
+	let fallbackEntry: string | undefined;
 
 	return createUnplugin(() => ({
 		name: "foundryvtt-sync",
-
-		// Cross-bundler: Define globals
-		define: {
-			__VTT_SYNC_MODULE__: JSON.stringify(moduleJSON),
-		},
 
 		// Cross-bundler: Build hook for pack compilation
 		// Should NOT be ran on dev server.
@@ -189,60 +119,44 @@ export function createPlugin(moduleJSON: { id: string }, _options: PluginOptions
 			await compilePacks(options);
 		},
 
-		// Cross-bundler: Transform hook for code injection
-		/*
-		transform(code) {
-			if (!hasInjectedCompendiumSync) {
-				code += `\n\nimport compendiumSync from 'foundryvtt-sync/compendiumSync';\ncompendiumSync()\n\n`;
-				hasInjectedCompendiumSync = true;
-				log("Injected compendium sync code.");
-			}
-			return code;
-		},
-		*/
-
 		// Vite-specific extensions for dev server
 		vite: {
-			configureServer(server: ViteDevServer) {
-				isDevServer = !!server;
-				/*
-				server.watcher.add([options.dataDirectory]);
-
-				server.ws.on(
-					"foundryvtt-compendium-sync:vtt-update",
-					(data, client) => onUpdate(data, client, options),
-				);
-
-				server.ws.on(
-					"foundryvtt-compendium-sync:vtt-delete",
-					({ id, dir }) => onDelete(id, dir, options),
-				);
-				*/
+			configResolved(config: ResolvedConfig) {
+				entries = entryFiles(config);
 			},
 
-			/* handleHotUpdate(ctx) {
-				if (
-					ctx.file.startsWith(`${options.dataDirectory}/`)
-					&& ctx.file.endsWith("json")
-					&& !ctx.file.includes("/_deleted")
-				) {
-					setTimeout(async () => {
-						const content = await ctx.read();
-						try {
-							const data = JSON.parse(content);
-							ctx.server.ws.send({
-								type: "custom",
-								event: "foundryvtt-compendium-sync:system-update",
-								data: { json: JSON.stringify(data), file: ctx.file, timestamp: ctx.timestamp },
-							});
-						} catch (err) {
-							console.warn(err);
-						}
-					}, 500);
-				}
-			}, */
+			configureServer(server: ViteDevServer) {
+				isDevServer = !!server;
+				setupLiveSync(server, moduleJSON.id, options);
+			},
+
+			resolveId(id: string) {
+				return id === CLIENT_ID ? RESOLVED_CLIENT_ID : undefined;
+			},
+
+			load(id: string) {
+				if (id !== RESOLVED_CLIENT_ID) return;
+				const code = fs.readFileSync(CLIENT_FILE, "utf8").replace(/^\/\/# sourceMappingURL=.*$/m, "");
+				const config = { id: moduleJSON.id, folders: !!options.extractOptions.folders };
+				return `${code}\ncompendiumSync(${JSON.stringify(config)});\n`;
+			},
+
+			// Adds the live sync client (and its toggle) to the module's entry, only while the dev server runs.
+			transform(code: string, id: string, transformOptions?: { ssr?: boolean }) {
+				if (!isDevServer || transformOptions?.ssr) return;
+				const file = id.split("?")[0];
+				if (entries.size ? !entries.has(file) : !isFallbackEntry(file)) return;
+				return { code: `${code}\nimport "${CLIENT_ID}";\n`, map: null };
+			},
 		},
 	}));
+
+	/** Without a configured entry, the first script the dev server transforms is the one Foundry requested. */
+	function isFallbackEntry(file: string) {
+		if (!/\.(?:[cm]?[jt]sx?|svelte|vue)$/.test(file) || file.includes("/node_modules/") || file.startsWith("\0")) return false;
+		fallbackEntry ??= file;
+		return fallbackEntry === file;
+	}
 }
 
 export type UnpluginInstance = ReturnType<typeof createPlugin>;
